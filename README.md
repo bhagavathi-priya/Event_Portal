@@ -6,14 +6,18 @@ A secure, responsive, and modern web application built using **React.js (Vite)**
 
 ## 🚀 Key Features
 
-### 1. Role-Based Access Control (RBAC)
-The portal supports exactly two roles:
+### 1. Role-Based Access Control (RBAC) & Authentication
+The portal supports two authenticated roles with credentials validated against the `localStorage` mock database:
 *   **Student Voter**:
     *   Browse candidate profiles and read campaign manifestos.
     *   Cast exactly one vote per category (e.g. President, Vice President, Treasurer).
     *   Review ballot before submission and receive a signed cryptographic receipt.
+    *   **Student ID range restriction**: Logins are restricted to registered student IDs in the range **`23CS001` to `23CS050`**. IDs outside this range are rejected with a warning.
     *   Cannot add/edit candidates, toggle election windows, or view live tally charts.
 *   **Election Manager**:
+    *   Requires logging in at `/manager/login` with credentials:
+        *   **Username/Email**: `admin` or `admin123@gmail.com`
+        *   **Password**: `admin123`
     *   Access manager dashboards to control the active election status (OPEN / CLOSED).
     *   Perform full CRUD operations on candidates (Add, Edit, Delete).
     *   View real-time Leaderboards and Live Tally bar charts.
