@@ -1,14 +1,19 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Election Manager Workflow', () => {
-  test.beforeEach(async ({ request }) => {
-    await request.post('/api/debug/reset');
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/role-selection');
+    await page.evaluate(() => window.localStorage.clear());
   });
 
   test('can add and edit candidates, toggle voting, and view live tally', async ({ page }) => {
     // 1. Visit Role Selection and Log in as Manager
     await page.goto('/role-selection');
     await page.click('#btn-enter-manager');
+    await expect(page).toHaveURL(/\/manager\/login/);
+    await page.fill('#manager-username-input', 'admin');
+    await page.fill('#manager-password-input', 'admin123');
+    await page.click('#btn-submit-login');
     await expect(page).toHaveURL(/\/manager\/dashboard/);
 
     // 2. Navigate to Candidate Management

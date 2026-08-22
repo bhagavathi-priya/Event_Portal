@@ -1,20 +1,39 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Duplicate Vote Restriction', () => {
-  test.beforeEach(async ({ request }) => {
-    await request.post('/api/debug/reset');
+  test.beforeEach(async ({ page }) => {
+    // Clear localStorage in the browser to start fresh
+    await page.goto('/role-selection');
+    await page.evaluate(() => window.localStorage.clear());
   });
 
   test('prevents student from voting twice in the same category', async ({ page }) => {
-    // Log in as student
+    // 1. Log in as Manager to add candidate first
     await page.goto('/role-selection');
-    await page.fill('#student-id-input', 'STU_DUP_TEST');
+    await page.click('#btn-enter-manager');
+    await expect(page).toHaveURL(/\/manager\/login/);
+    await page.fill('#manager-username-input', 'admin');
+    await page.fill('#manager-password-input', 'admin123');
+    await page.click('#btn-submit-login');
+    
+    // Navigate to Candidate Management and add candidate
+    await page.click('a[href="/manager/candidates"]');
+    await page.click('#btn-add-candidate');
+    await page.fill('#form-name', 'Alex Rivera');
+    await page.fill('#form-bio', 'Third-year Computer Science major. Passionate about transparency.');
+    await page.fill('#form-manifesto', 'Expand campus technology funding.');
+    await page.click('#btn-submit-candidate-form');
+
+    // 2. Switch to Student
+    await page.click('#btn-switch-role');
+    await page.fill('#student-id-input', '23CS002');
     await page.click('#btn-enter-student');
 
-    // Go to Category A Candidates list
-    await page.goto('/student/vote/cat-1');
+    // 3. Go to Category A Candidates list
+    await page.click('a[href="/student/vote/cat-1"], button:has-text("Browse Candidates")');
+    await expect(page).toHaveURL(/\/student\/vote\/cat-1/);
     
-    // Select first candidate
+    // Select candidate
     await page.click('h3:has-text("Alex Rivera")');
     
     // Submit vote
@@ -24,8 +43,9 @@ test.describe('Duplicate Vote Restriction', () => {
     // Verify receipt is shown (successful vote)
     await expect(page).toHaveURL(/\/student\/receipt\/receipt-/);
 
-    // Go back to the same candidate page (Alex Rivera)
-    await page.goto('/student/candidate/cand-1');
+    // 4. Navigate directly back to the category candidates page
+    await page.goto('/student/vote/cat-1');
+    await page.click('h3:has-text("Alex Rivera")');
 
     // Verify warning that user has already voted is visible
     await expect(page.locator('text=You have already voted in this category')).toBeVisible();

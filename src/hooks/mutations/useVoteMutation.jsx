@@ -6,7 +6,7 @@ export const useVoteMutation = () => {
 
   return useMutation({
     mutationFn: ({ categoryId, candidateId }) => voteApi.castVote(categoryId, candidateId),
-    onSuccess: (data) => {
+    onSuccess: () => {
       // Invalidate relevant queries so the UI updates
       queryClient.invalidateQueries({ queryKey: ['election'] });
       queryClient.invalidateQueries({ queryKey: ['candidates'] });

@@ -1,14 +1,15 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Responsive Layout Verification', () => {
-  test.beforeEach(async ({ request }) => {
-    await request.post('/api/debug/reset');
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/role-selection');
+    await page.evaluate(() => window.localStorage.clear());
   });
 
   test('adjusts navigation controls across desktop, tablet, and mobile', async ({ page }) => {
     // 1. Log in as Student
     await page.goto('/role-selection');
-    await page.fill('#student-id-input', 'STU_RESPONSIVE');
+    await page.fill('#student-id-input', '23CS005');
     await page.click('#btn-enter-student');
     await expect(page).toHaveURL(/\/student\/dashboard/);
 

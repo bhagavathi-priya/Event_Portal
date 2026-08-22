@@ -19,6 +19,7 @@ import ManagerLayout from '../layouts/ManagerLayout';
 import ManagerDashboard from '../pages/manager/ManagerDashboard';
 import CandidateManagement from '../pages/manager/CandidateManagement';
 import LiveTally from '../pages/manager/LiveTally';
+import ManagerLogin from '../pages/manager/ManagerLogin';
 
 export const AppRoutes = () => {
   return (
@@ -27,6 +28,7 @@ export const AppRoutes = () => {
       <Route path="/" element={<Navigate to="/role-selection" replace />} />
       <Route path="/role-selection" element={<RoleSelection />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/manager/login" element={<ManagerLogin />} />
 
       {/* Student Protected Routes */}
       <Route

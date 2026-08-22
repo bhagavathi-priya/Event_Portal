@@ -1,4 +1,5 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+/* eslint-disable react/only-export-components */
+import React, { createContext, useState, useContext } from 'react';
 import { ROLES } from '../utils/permissions';
 
 const AuthContext = createContext(null);

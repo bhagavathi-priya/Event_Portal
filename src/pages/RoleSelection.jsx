@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '../hooks/useRole';
+import axiosClient from '../api/axiosClient';
 import { ROLES } from '../utils/permissions';
 import { motion } from 'framer-motion';
 
@@ -10,20 +11,32 @@ export const RoleSelection = () => {
   const [studentId, setStudentId] = useState('');
   const [error, setError] = useState('');
 
-  const handleStudentLogin = (e) => {
+  const handleStudentLogin = async (e) => {
     e.preventDefault();
-    if (!studentId.trim()) {
+    const cleanId = studentId.trim();
+    if (!cleanId) {
       setError('Please enter a valid Student ID');
       return;
     }
     setError('');
-    login(ROLES.STUDENT, studentId.trim());
-    navigate('/student/dashboard');
+
+    try {
+      const response = await axiosClient.post('/api/auth/student-login', {
+        studentId: cleanId,
+      });
+
+      if (response.success) {
+        login(ROLES.STUDENT, cleanId);
+        navigate('/student/dashboard');
+      }
+    } catch (err) {
+      console.error('STUDENT LOGIN ERROR:', err);
+      setError(err.message || 'Invalid Student ID.');
+    }
   };
 
   const handleManagerLogin = () => {
-    login(ROLES.MANAGER);
-    navigate('/manager/dashboard');
+    navigate('/manager/login');
   };
 
   return (
@@ -72,7 +85,7 @@ export const RoleSelection = () => {
                 <input
                   id="student-id-input"
                   type="text"
-                  placeholder="Enter Student ID (e.g. STU_01)"
+                  placeholder="Enter Student ID (e.g. 23CS001)"
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-750 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-lg text-slate-100 placeholder-slate-500 outline-none transition-all"

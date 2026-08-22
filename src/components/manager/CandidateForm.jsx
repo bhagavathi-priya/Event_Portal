@@ -1,36 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export const CandidateForm = ({ 
   categories = [], 
   initialValues = null, 
+  defaultCategoryId = '',
   onSubmit, 
   onCancel,
   isSubmitting = false
 }) => {
-  const [categoryId, setCategoryId] = useState('');
-  const [name, setName] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [bio, setBio] = useState('');
-  const [manifesto, setManifesto] = useState('');
+  const [categoryId, setCategoryId] = useState(() => initialValues?.categoryId || defaultCategoryId || categories[0]?.id || '');
+  const [name, setName] = useState(() => initialValues?.name || '');
+  const [imageUrl, setImageUrl] = useState(() => initialValues?.imageUrl || '');
+  const [bio, setBio] = useState(() => initialValues?.bio || '');
+  const [manifesto, setManifesto] = useState(() => initialValues?.manifesto || '');
   const [errors, setErrors] = useState({});
-
-  useEffect(() => {
-    if (initialValues) {
-      setCategoryId(initialValues.categoryId || '');
-      setName(initialValues.name || '');
-      setImageUrl(initialValues.imageUrl || '');
-      setBio(initialValues.bio || '');
-      setManifesto(initialValues.manifesto || '');
-    } else {
-      // Default to first category if available
-      setCategoryId(categories[0]?.id || '');
-      setName('');
-      setImageUrl('');
-      setBio('');
-      setManifesto('');
-    }
-    setErrors({});
-  }, [initialValues, categories]);
 
   const validate = () => {
     const newErrors = {};

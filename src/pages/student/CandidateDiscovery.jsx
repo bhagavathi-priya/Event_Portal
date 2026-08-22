@@ -46,7 +46,7 @@ export const CandidateDiscovery = () => {
     );
   }
 
-  const { election, categories } = electionRes.data;
+  const { categories } = electionRes.data;
   const category = categories.find((c) => c.id === categoryId);
   const candidatesList = candidatesRes.data || [];
   const voterStatus = statusRes?.data || { votedCategoryIds: {} };
@@ -174,9 +174,13 @@ export const CandidateDiscovery = () => {
         ) : (
           <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl dark:bg-slate-900 dark:border-slate-800">
             <span className="text-slate-400 text-5xl">🔍</span>
-            <h3 className="text-base font-bold text-slate-705 dark:text-slate-300 mt-3">No Candidates Found</h3>
+            <h3 className="text-base font-bold text-slate-705 dark:text-slate-300 mt-3">
+              {candidatesList.length === 0 ? 'No Candidates' : 'No Candidates Found'}
+            </h3>
             <p className="text-xs text-slate-500 mt-1">
-              {searchQuery ? `No candidates match "${searchQuery}"` : 'No candidates registered in this category yet.'}
+              {candidatesList.length === 0 
+                ? 'No candidates have been added yet.' 
+                : `No candidates match "${searchQuery}"`}
             </p>
           </div>
         )}

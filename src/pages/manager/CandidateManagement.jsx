@@ -28,7 +28,6 @@ export const CandidateManagement = () => {
   const updateMutation = useUpdateCandidateMutation();
   const deleteMutation = useDeleteCandidateMutation();
 
-  const isLoading = electionLoading || candidatesLoading;
 
   if (electionLoading) {
     return (
@@ -220,7 +219,7 @@ export const CandidateManagement = () => {
             <span className="text-slate-400 text-5xl">👤</span>
             <h3 className="text-base font-bold text-slate-700 dark:text-slate-300 mt-3">No Candidates</h3>
             <p className="text-xs text-slate-500 mt-1">
-              There are no candidates registered in this category yet. Click Add New Candidate above to begin.
+              No candidates have been added yet. Click Add New Candidate above to begin.
             </p>
           </div>
         )}
@@ -232,8 +231,10 @@ export const CandidateManagement = () => {
           title={selectedCandidate ? 'Edit Candidate Details' : 'Add New Candidate'}
         >
           <CandidateForm
+            key={selectedCandidate?.id || 'new'}
             categories={categories}
             initialValues={selectedCandidate}
+            defaultCategoryId={activeCategoryId}
             isSubmitting={createMutation.isPending || updateMutation.isPending}
             onSubmit={handleFormSubmit}
             onCancel={() => setIsFormOpen(false)}

@@ -10,7 +10,9 @@ import {
   updateCandidate, 
   deleteCandidate,
   setElectionStatus,
-  resetDb
+  resetDb,
+  managers,
+  validStudents
 } from './data';
 import { ROLES, hasPermission, PERMISSIONS } from '../utils/permissions';
 
@@ -21,6 +23,93 @@ const checkHeaderPermission = (request, permission) => {
 };
 
 export const handlers = [
+  // POST student login authentication
+  http.post('/api/auth/student-login', async ({ request }) => {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
+        { status: 400 }
+      );
+    }
+
+    const { studentId } = body;
+    if (!studentId || !studentId.trim()) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Student ID is required.' } },
+        { status: 400 }
+      );
+    }
+
+    const cleanId = studentId.trim();
+    const isValid = validStudents.includes(cleanId);
+
+    if (!isValid) {
+      return HttpResponse.json(
+        { 
+          success: false, 
+          error: { 
+            code: 'UNAUTHORIZED', 
+            message: 'Invalid Student ID. Only registered students (23CS001 to 23CS050) are authorized to vote.' 
+          } 
+        },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        role: ROLES.STUDENT,
+        studentId: cleanId,
+        name: `Student (${cleanId})`,
+      }
+    });
+  }),
+
+  // POST manager login authentication
+  http.post('/api/auth/manager-login', async ({ request }) => {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
+        { status: 400 }
+      );
+    }
+
+    const { username, password } = body;
+    if (!username || !password) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Username and password are required fields.' } },
+        { status: 400 }
+      );
+    }
+
+    const matchedManager = managers.find(
+      (m) => (m.username === username.trim() || m.email === username.trim()) && m.password === password
+    );
+
+    if (!matchedManager) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'UNAUTHORIZED', message: 'Invalid username or password.' } },
+        { status: 401 }
+      );
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        role: ROLES.MANAGER,
+        username: matchedManager.username,
+        name: matchedManager.name,
+      }
+    });
+  }),
+
   // GET election metadata
   http.get('/api/elections/:id', ({ params }) => {
     if (election.id !== params.id) {
@@ -93,7 +182,7 @@ export const handlers = [
     let body;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return HttpResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
         { status: 400 }
@@ -227,7 +316,7 @@ export const handlers = [
     let body;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return HttpResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
         { status: 400 }
@@ -277,7 +366,7 @@ export const handlers = [
     let body;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return HttpResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
         { status: 400 }
@@ -340,7 +429,7 @@ export const handlers = [
     let body;
     try {
       body = await request.json();
-    } catch (e) {
+    } catch {
       return HttpResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
         { status: 400 }
