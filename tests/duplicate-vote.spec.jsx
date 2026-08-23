@@ -20,6 +20,7 @@ test.describe('Duplicate Vote Restriction', () => {
     await page.click('a[href="/manager/candidates"]');
     await page.click('#btn-add-candidate');
     await page.fill('#form-name', 'Alex Rivera');
+    await page.selectOption('#form-gender', 'male');
     await page.fill('#form-bio', 'Third-year Computer Science major. Passionate about transparency.');
     await page.fill('#form-manifesto', 'Expand campus technology funding.');
     await page.click('#btn-submit-candidate-form');

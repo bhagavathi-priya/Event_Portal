@@ -164,6 +164,14 @@ export const CandidateManagement = () => {
                           src={cand.imageUrl}
                           alt={cand.name}
                           className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-100 dark:border-slate-750"
+                          onError={(e) => {
+                            const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
+                            const gender = isFemale ? 'women' : 'men';
+                            const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
+                            const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
+                            e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+                            e.target.onerror = null;
+                          }}
                         />
                         <div className="flex flex-col">
                           <span className="font-bold text-slate-900 dark:text-white">{cand.name}</span>

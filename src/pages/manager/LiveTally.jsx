@@ -147,6 +147,14 @@ export const LiveTally = () => {
                           src={cand.imageUrl}
                           alt={cand.candidateName}
                           className="w-8 h-8 rounded-full object-cover border border-slate-150 dark:border-slate-700"
+                          onError={(e) => {
+                            const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
+                            const gender = isFemale ? 'women' : 'men';
+                            const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
+                            const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
+                            e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+                            e.target.onerror = null;
+                          }}
                         />
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">

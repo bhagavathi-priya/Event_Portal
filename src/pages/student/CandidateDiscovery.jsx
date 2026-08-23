@@ -140,6 +140,14 @@ export const CandidateDiscovery = () => {
                     src={candidate.imageUrl}
                     alt={candidate.name}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                    onError={(e) => {
+                      const isFemale = (candidate.gender === 'female' || candidate.imageUrl?.includes('/female/'));
+                      const gender = isFemale ? 'women' : 'men';
+                      const match = (candidate.imageUrl || '').match(/\/(\d+)\.jpg$/);
+                      const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
+                      e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+                      e.target.onerror = null;
+                    }}
                   />
                   <div className="absolute top-3 right-3">
                     <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-900/60 backdrop-blur-md text-white rounded-full">

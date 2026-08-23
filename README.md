@@ -13,6 +13,7 @@ The portal supports two authenticated roles with credentials validated against t
     *   Cast exactly one vote per category (e.g. President, Vice President, Treasurer).
     *   Review ballot before submission and receive a signed cryptographic receipt.
     *   **Student ID range restriction**: Logins are restricted to registered student IDs in the range **`23CS001` to `23CS050`**. IDs outside this range are rejected with a warning.
+    *   **Secret Ballot Receipts**: Receipts display the voter ID, category, date (e.g. `23 August 2026`), and time (e.g. `10:45:32 AM`), but explicitly hide the candidate selected to protect secret-ballot voting privacy.
     *   Cannot add/edit candidates, toggle election windows, or view live tally charts.
 *   **Election Manager**:
     *   Requires logging in at `/manager/login` with credentials:
@@ -20,6 +21,8 @@ The portal supports two authenticated roles with credentials validated against t
         *   **Password**: `admin123`
     *   Access manager dashboards to control the active election status (OPEN / CLOSED).
     *   Perform full CRUD operations on candidates (Add, Edit, Delete).
+    *   **Gender-Based Profile Photos**: Candidates can be registered as Male or Female. The mock backend automatically assigns a random photo from the corresponding gender folder. The frontend includes a smart `onError` handler that falls back to high-quality portraits/emojis if the local files are missing on disk.
+    *   **Placeholder Auto-Swapping**: Editing a candidate's gender dynamically clears and swaps their placeholder image path to match the updated gender.
     *   View real-time Leaderboards and Live Tally bar charts.
     *   Cannot cast votes or access student ballot actions.
 
@@ -88,6 +91,9 @@ Launches the Vite dev server locally:
 npm run dev
 ```
 *(Once started, visit **`http://localhost:5173/`** in your browser)*
+
+> [!NOTE]
+> **Automatic hot reloading (HMR)** is configured with filesystem watch polling inside `vite.config.js`. This guarantees file saves are immediately detected and hot-reloaded, resolving watch issues commonly encountered on Windows desktop paths synced by OneDrive or virtual machines.
 
 ### 3. Run E2E Playwright Tests
 Executes the E2E verification test suite (tests student flows, duplicate voting rejections, manager workflows, and responsiveness):

@@ -24,6 +24,7 @@ test.describe('Student Voting Flow', () => {
     // 3. Add Candidate "Alex Rivera"
     await page.click('#btn-add-candidate');
     await page.fill('#form-name', 'Alex Rivera');
+    await page.selectOption('#form-gender', 'male');
     await page.fill('#form-bio', 'Third-year Computer Science major. Passionate about transparency, coding workshops, and campus-wide hackathons.');
     await page.fill('#form-manifesto', 'My manifesto is simple: expand campus technology funding, provide free textbooks online, and host student-led career fairs. Let\'s make our campus a hub for tech and innovation!');
     await page.click('#btn-submit-candidate-form');
@@ -65,6 +66,5 @@ test.describe('Student Voting Flow', () => {
     await expect(page.locator('h1')).toContainText('Vote Confirmed!');
     await expect(page.locator('#receipt-card')).toContainText('23CS001');
     await expect(page.locator('#receipt-card')).toContainText('Student Body President');
-    await expect(page.locator('#receipt-card')).toContainText('Alex Rivera');
   });
 });

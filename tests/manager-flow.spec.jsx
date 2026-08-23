@@ -7,6 +7,7 @@ test.describe('Election Manager Workflow', () => {
   });
 
   test('can add and edit candidates, toggle voting, and view live tally', async ({ page }) => {
+    page.on('console', msg => console.log('[BROWSER] ' + msg.type().toUpperCase() + ':', msg.text()));
     // 1. Visit Role Selection and Log in as Manager
     await page.goto('/role-selection');
     await page.click('#btn-enter-manager');
@@ -25,6 +26,7 @@ test.describe('Election Manager Workflow', () => {
     await expect(page.locator('#modal-title')).toBeVisible();
 
     await page.fill('#form-name', 'Jamie Lancaster');
+    await page.selectOption('#form-gender', 'female');
     await page.fill('#form-bio', 'Second-year Business major. Former student council member.');
     await page.fill('#form-manifesto', 'My vision is simple: improve college dining services and extend gym hours.');
     await page.click('#btn-submit-candidate-form');
@@ -37,8 +39,9 @@ test.describe('Election Manager Workflow', () => {
     await page.click('tr:has-text("Jamie Lancaster") .btn-edit-candidate');
     await expect(page.locator('#modal-title')).toContainText('Edit Candidate');
     
-    // Modify candidate name
+    // Modify candidate name and gender
     await page.fill('#form-name', 'Jamie Lancaster Jr.');
+    await page.selectOption('#form-gender', 'male');
     await page.click('#btn-submit-candidate-form');
     
     // Confirm change is updated in table

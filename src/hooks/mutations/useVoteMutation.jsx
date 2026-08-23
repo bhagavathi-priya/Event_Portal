@@ -12,6 +12,7 @@ export const useVoteMutation = () => {
       queryClient.invalidateQueries({ queryKey: ['candidates'] });
       queryClient.invalidateQueries({ queryKey: ['tally'] });
       queryClient.invalidateQueries({ queryKey: ['voterStatus'] });
+      queryClient.invalidateQueries({ queryKey: ['votes'] });
     },
   });
 };

@@ -4,6 +4,29 @@ import { useReceiptQuery } from '../../hooks/queries/useReceiptQuery';
 import { PageTransition } from '../../components/motion/PageTransition';
 import { motion, useReducedMotion } from 'framer-motion';
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day} ${month} ${year}`;
+};
+
+const formatTime = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const hoursStr = String(hours).padStart(2, '0');
+  return `${hoursStr}:${minutes}:${seconds} ${ampm}`;
+};
+
 export const VoteReceipt = () => {
   const { receiptId } = useParams();
   const navigate = useNavigate();
@@ -145,21 +168,22 @@ export const VoteReceipt = () => {
                 </span>
               </div>
 
+
               <div className="flex justify-between items-center">
                 <span className="text-slate-450 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                  Candidate Selected
+                  Date
                 </span>
-                <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                  {receipt.candidateName}
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {formatDate(receipt.issuedAt)}
                 </span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="text-slate-450 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                  Cast Time
+                  Time
                 </span>
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-350">
-                  {new Date(receipt.issuedAt).toLocaleString()}
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {formatTime(receipt.issuedAt)}
                 </span>
               </div>
             </div>

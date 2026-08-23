@@ -323,7 +323,7 @@ export const handlers = [
       );
     }
 
-    const { categoryId, name, bio, manifesto, imageUrl } = body;
+    const { categoryId, name, bio, manifesto, imageUrl, gender } = body;
 
     if (!categoryId || !name || !bio || !manifesto) {
       return HttpResponse.json(
@@ -340,12 +340,18 @@ export const handlers = [
       );
     }
 
+    const cleanGender = (gender || 'male').toLowerCase() === 'female' ? 'female' : 'male';
+    const randomIndex = Math.floor(Math.random() * 50) + 1;
+    // Assign local image path based on gender
+    const finalImageUrl = imageUrl?.trim() || `/images/candidates/${cleanGender}/${randomIndex}.jpg`;
+
     const newCandidate = addCandidate({
       categoryId,
       name,
       bio,
       manifesto,
-      imageUrl: imageUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&h=400&q=80'
+      gender: cleanGender,
+      imageUrl: finalImageUrl
     });
 
     return HttpResponse.json({
@@ -373,7 +379,36 @@ export const handlers = [
       );
     }
 
+    const { gender, imageUrl } = body;
+    const existingCandidate = candidates.find(c => c.id === params.id);
+    const currentImageUrl = (imageUrl !== undefined ? imageUrl : existingCandidate?.imageUrl) || '';
+
+    if (gender) {
+      body.gender = gender.toLowerCase() === 'female' ? 'female' : 'male';
+      
+      const isDefaultMalePhoto = (url) => {
+        return !url || 
+          url.includes('photo-1535713875002-d1d0cf377fde') || 
+          url.includes('/images/candidates/male/');
+      };
+      
+      const isDefaultFemalePhoto = (url) => {
+        return url.includes('/images/candidates/female/');
+      };
+
+      const needsFemalePhoto = body.gender === 'female' && isDefaultMalePhoto(currentImageUrl);
+      const needsMalePhoto = body.gender === 'male' && isDefaultFemalePhoto(currentImageUrl);
+
+      // If image is cleared, or if it is a default placeholder that mismatches the new gender, auto-assign
+      if (!currentImageUrl.trim() || needsFemalePhoto || needsMalePhoto) {
+        const randomIndex = Math.floor(Math.random() * 50) + 1;
+        body.imageUrl = `/images/candidates/${body.gender}/${randomIndex}.jpg`;
+      }
+    }
+
+    console.log('PATCH BODY:', body);
     const updated = updateCandidate(params.id, body);
+    console.log('UPDATED CANDIDATE:', updated);
     if (!updated) {
       return HttpResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: 'Candidate not found.' } },
@@ -478,6 +513,7 @@ export const handlers = [
         candidateId: c.id,
         candidateName: c.name,
         imageUrl: c.imageUrl,
+        gender: c.gender || 'male',
         votes: c.votesCount || 0,
         percentage: totalCatVotes > 0 ? Math.round(((c.votesCount || 0) / totalCatVotes) * 100) : 0
       }));
@@ -502,6 +538,36 @@ export const handlers = [
         totalVotesCast: votes.length,
         tallies: categoryTallies
       }
+    });
+  }),
+
+  // GET all votes history (Manager only)
+  http.get('/api/manager/votes', ({ request }) => {
+    if (!checkHeaderPermission(request, PERMISSIONS.VIEW_TALLY)) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'FORBIDDEN', message: 'Access Denied: Election Manager permission required.' } },
+        { status: 403 }
+      );
+    }
+
+    const votesList = votes.map(v => {
+      const cand = candidates.find(c => c.id === v.candidateId);
+      const cat = categories.find(c => c.id === v.categoryId);
+      return {
+        id: v.id,
+        studentId: v.studentId,
+        candidateName: cand ? cand.name : 'Unknown Candidate',
+        categoryName: cat ? cat.name : 'Unknown Category',
+        createdAt: v.createdAt
+      };
+    });
+
+    // Sort newest votes first
+    votesList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return HttpResponse.json({
+      success: true,
+      data: votesList
     });
   }),
 

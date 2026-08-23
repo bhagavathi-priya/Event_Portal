@@ -11,6 +11,7 @@ export const CandidateForm = ({
   const [categoryId, setCategoryId] = useState(() => initialValues?.categoryId || defaultCategoryId || categories[0]?.id || '');
   const [name, setName] = useState(() => initialValues?.name || '');
   const [imageUrl, setImageUrl] = useState(() => initialValues?.imageUrl || '');
+  const [gender, setGender] = useState(() => initialValues?.gender || 'male');
   const [bio, setBio] = useState(() => initialValues?.bio || '');
   const [manifesto, setManifesto] = useState(() => initialValues?.manifesto || '');
   const [errors, setErrors] = useState({});
@@ -19,12 +20,16 @@ export const CandidateForm = ({
     const newErrors = {};
     if (!categoryId) newErrors.categoryId = 'Category is required';
     if (!name.trim()) newErrors.name = 'Candidate name is required';
+    if (!gender) newErrors.gender = 'Gender is required';
     if (!bio.trim()) newErrors.bio = 'Candidate bio is required';
     if (!manifesto.trim()) newErrors.manifesto = 'Manifesto vision statement is required';
     
     // Optional URL validation
-    if (imageUrl.trim() && !imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-      newErrors.imageUrl = 'Image URL must start with http:// or https://';
+    if (imageUrl.trim() && 
+        !imageUrl.startsWith('http://') && 
+        !imageUrl.startsWith('https://') && 
+        !imageUrl.startsWith('/')) {
+      newErrors.imageUrl = 'Image URL must start with http://, https://, or /';
     }
 
     setErrors(newErrors);
@@ -35,10 +40,30 @@ export const CandidateForm = ({
     e.preventDefault();
     if (!validate()) return;
     
+    let finalImageUrl = imageUrl.trim();
+
+    const isDefaultMalePhoto = (url) => {
+      return !url || 
+        url.includes('photo-1535713875002-d1d0cf377fde') || 
+        url.includes('/images/candidates/male/');
+    };
+    
+    const isDefaultFemalePhoto = (url) => {
+      return url.includes('/images/candidates/female/');
+    };
+
+    // If gender is changed but the profile is still showing the opposite gender's placeholder, clear it
+    if (gender === 'female' && isDefaultMalePhoto(finalImageUrl)) {
+      finalImageUrl = '';
+    } else if (gender === 'male' && isDefaultFemalePhoto(finalImageUrl)) {
+      finalImageUrl = '';
+    }
+
     onSubmit({
       categoryId,
       name: name.trim(),
-      imageUrl: imageUrl.trim() || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&h=400&q=80',
+      imageUrl: finalImageUrl,
+      gender,
       bio: bio.trim(),
       manifesto: manifesto.trim()
     });
@@ -80,6 +105,23 @@ export const CandidateForm = ({
           className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all text-slate-900 dark:text-slate-50"
         />
         {errors.name && <p className="text-rose-500 text-xs mt-0.5">{errors.name}</p>}
+      </div>
+
+      {/* Gender selection */}
+      <div className="flex flex-col gap-1">
+        <label htmlFor="form-gender" className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          Gender *
+        </label>
+        <select
+          id="form-gender"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-805 rounded-xl focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
+        >
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+        </select>
+        {errors.gender && <p className="text-rose-500 text-xs mt-0.5">{errors.gender}</p>}
       </div>
 
       {/* Image URL */}

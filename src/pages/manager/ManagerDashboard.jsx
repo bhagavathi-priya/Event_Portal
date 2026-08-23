@@ -5,7 +5,6 @@ import { useElectionMutation } from '../../hooks/mutations/useElectionMutation';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { AnimatedModal } from '../../components/motion/AnimatedModal';
 import { PageTransition } from '../../components/motion/PageTransition';
-
 export const ManagerDashboard = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [statusError, setStatusError] = useState(null);
@@ -184,6 +183,7 @@ export const ManagerDashboard = () => {
             })}
           </div>
         </div>
+
 
         {/* Confirmation Modal */}
         <AnimatedModal
