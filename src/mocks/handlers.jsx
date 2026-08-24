@@ -17,6 +17,38 @@ import {
 } from './data';
 import { ROLES, hasPermission, PERMISSIONS } from '../utils/permissions';
 
+// Helper to dynamically calculate and return candidates with updated vote counts for events
+const getUpdatedCandidates = () => {
+  let storedEventVotes = [];
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const raw = window.localStorage.getItem('voting_event_votes');
+      if (raw) {
+        storedEventVotes = JSON.parse(raw);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  return candidates.map(c => {
+    if (c.categoryId.startsWith('ev-')) {
+      let count = 0;
+      storedEventVotes.forEach(v => {
+        if (v.selections) {
+          Object.values(v.selections).forEach(val => {
+            if (val === c.name) {
+              count++;
+            }
+          });
+        }
+      });
+      return { ...c, votesCount: count };
+    }
+    return c;
+  });
+};
+
 // Helper to check role permission from request headers
 const checkHeaderPermission = (request, permission) => {
   const role = request.headers.get('x-user-role');
@@ -143,7 +175,7 @@ export const handlers = [
         { status: 404 }
       );
     }
-    const filteredCandidates = candidates.filter(c => c.categoryId === params.categoryId);
+    const filteredCandidates = getUpdatedCandidates().filter(c => c.categoryId === params.categoryId);
     return HttpResponse.json({
       success: true,
       data: filteredCandidates
@@ -154,13 +186,13 @@ export const handlers = [
   http.get('/api/candidates', () => {
     return HttpResponse.json({
       success: true,
-      data: candidates
+      data: getUpdatedCandidates()
     });
   }),
 
   // GET candidate profile
   http.get('/api/candidates/:id', ({ params }) => {
-    const candidate = candidates.find(c => c.id === params.id);
+    const candidate = getUpdatedCandidates().find(c => c.id === params.id);
     if (!candidate) {
       return HttpResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: 'Candidate not found' } },

@@ -36,6 +36,7 @@ The portal supports two authenticated roles with credentials validated against t
 ### 3. Real-Time Synchronization & Caching
 *   Queries and mutations are managed by **TanStack React Query v5**.
 *   **Real-time synchronization** is enabled for both Manager and Student portals using background polling (every 3 seconds). If the Manager adds, edits, or deletes any candidate/option/category, the changes are automatically reflected on the student ballot screens in real time.
+*   **Dynamic Option Vote Counting**: Candidate/Option GET routes dynamically scan the local storage `voting_event_votes` structured ledger to calculate and populate up-to-date `votesCount` metrics in real-time, ensuring current vote counts for event options are always accurate on the manager's "Manage Options" screen.
 
 ### 4. Interactive Framer Motion UI & Styling
 *   **Rich Aesthetics**: The UI features curated harmonized colors (deep indigo, violet, slate), dark mode compatibility, and glassmorphism styling tokens.
