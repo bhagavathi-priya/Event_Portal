@@ -6,5 +6,6 @@ export const useVoterStatusQuery = (role, studentId) => {
     queryKey: ['voterStatus', studentId],
     queryFn: () => voteApi.getVoterStatus(),
     enabled: role === 'student' && !!studentId,
+    refetchInterval: 3000,
   });
 };

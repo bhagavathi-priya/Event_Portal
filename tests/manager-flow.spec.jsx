@@ -17,9 +17,13 @@ test.describe('Election Manager Workflow', () => {
     await page.click('#btn-submit-login');
     await expect(page).toHaveURL(/\/manager\/dashboard/);
 
+    // Click Club Management card to enter Club workspace
+    await page.click('#card-club-management');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
+
     // 2. Navigate to Candidate Management
-    await page.click('a[href="/manager/candidates"]');
-    await expect(page).toHaveURL(/\/manager\/candidates/);
+    await page.click('a[href="/manager/club/candidates"]');
+    await expect(page).toHaveURL(/\/manager\/club\/candidates/);
 
     // 3. Add Candidate
     await page.click('#btn-add-candidate');
@@ -48,8 +52,8 @@ test.describe('Election Manager Workflow', () => {
     await expect(page.locator('tbody')).toContainText('Jamie Lancaster Jr.');
 
     // 5. Toggle Election Status (Close Voting)
-    await page.click('a[href="/manager/dashboard"]');
-    await expect(page).toHaveURL(/\/manager\/dashboard/);
+    await page.click('a[href="/manager/club/dashboard"]');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
     await expect(page.locator('text=Voting Open')).toBeVisible();
 
     // Click to close
@@ -61,8 +65,8 @@ test.describe('Election Manager Workflow', () => {
     await expect(page.locator('text=Voting Closed')).toBeVisible();
 
     // 6. Navigate to Live Tally and verify metrics are rendered
-    await page.click('a[href="/manager/tally"]');
-    await expect(page).toHaveURL(/\/manager\/tally/);
+    await page.click('a[href="/manager/club/tally"]');
+    await expect(page).toHaveURL(/\/manager\/club\/tally/);
     await expect(page.locator('h1')).toContainText('Live Vote Tally');
     await expect(page.locator('h2')).toContainText('Votes Submitted');
   });

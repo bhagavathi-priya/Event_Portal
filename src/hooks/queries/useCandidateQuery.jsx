@@ -6,5 +6,6 @@ export const useCandidateQuery = (candidateId) => {
     queryKey: ['candidate', candidateId],
     queryFn: () => candidateApi.getCandidate(candidateId),
     enabled: !!candidateId,
+    refetchInterval: 3000,
   });
 };

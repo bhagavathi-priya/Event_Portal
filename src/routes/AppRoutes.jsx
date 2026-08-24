@@ -57,8 +57,16 @@ export const AppRoutes = () => {
       >
         <Route path="" element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<ManagerDashboard />} />
-        <Route path="candidates" element={<CandidateManagement />} />
-        <Route path="tally" element={<LiveTally />} />
+        
+        {/* Club Module */}
+        <Route path="club/dashboard" element={<ManagerDashboard module="club" />} />
+        <Route path="club/candidates" element={<CandidateManagement module="club" />} />
+        <Route path="club/tally" element={<LiveTally module="club" />} />
+
+        {/* Event Module */}
+        <Route path="event/dashboard" element={<ManagerDashboard module="event" />} />
+        <Route path="event/candidates" element={<CandidateManagement module="event" />} />
+        <Route path="event/tally" element={<LiveTally module="event" />} />
       </Route>
 
       {/* Fallback */}

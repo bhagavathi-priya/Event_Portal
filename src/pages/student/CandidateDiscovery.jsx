@@ -159,7 +159,7 @@ export const CandidateDiscovery = () => {
                 {/* Info */}
                 <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
                       {candidate.name}
                     </h3>
                     <p className="text-xs text-slate-500 line-clamp-2">

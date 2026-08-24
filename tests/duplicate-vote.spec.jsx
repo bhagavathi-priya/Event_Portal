@@ -15,9 +15,14 @@ test.describe('Duplicate Vote Restriction', () => {
     await page.fill('#manager-username-input', 'admin');
     await page.fill('#manager-password-input', 'admin123');
     await page.click('#btn-submit-login');
+    await expect(page).toHaveURL(/\/manager\/dashboard/);
+
+    // Enter Club workspace
+    await page.click('#card-club-management');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
     
     // Navigate to Candidate Management and add candidate
-    await page.click('a[href="/manager/candidates"]');
+    await page.click('a[href="/manager/club/candidates"]');
     await page.click('#btn-add-candidate');
     await page.fill('#form-name', 'Alex Rivera');
     await page.selectOption('#form-gender', 'male');
@@ -29,6 +34,10 @@ test.describe('Duplicate Vote Restriction', () => {
     await page.click('#btn-switch-role');
     await page.fill('#student-id-input', '23CS002');
     await page.click('#btn-enter-student');
+
+    // Click to enter Club Portal and Coding Club election system
+    await page.click('text=Club Elections Portal');
+    await page.click('text=Coding Club');
 
     // 3. Go to Category A Candidates list
     await page.click('a[href="/student/vote/cat-1"], button:has-text("Browse Candidates")');

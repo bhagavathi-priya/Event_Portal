@@ -15,7 +15,10 @@ test.describe('Closed Election Constraints', () => {
     await page.fill('#manager-username-input', 'admin');
     await page.fill('#manager-password-input', 'admin123');
     await page.click('#btn-submit-login');
-    await page.click('a[href="/manager/candidates"]');
+    await expect(page).toHaveURL(/\/manager\/dashboard/);
+    await page.click('#card-club-management');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
+    await page.click('a[href="/manager/club/candidates"]');
     await page.click('#btn-add-candidate');
     await page.fill('#form-name', 'Alex Rivera');
     await page.selectOption('#form-gender', 'male');
@@ -27,6 +30,11 @@ test.describe('Closed Election Constraints', () => {
     await page.click('#btn-switch-role');
     await page.fill('#student-id-input', '23CS003');
     await page.click('#btn-enter-student');
+
+    // Click to enter Club Portal and Coding Club election system
+    await page.click('text=Club Elections Portal');
+    await page.click('text=Coding Club');
+
     await page.click('a[href="/student/vote/cat-1"], button:has-text("Browse Candidates")');
     await page.click('h3:has-text("Alex Rivera")');
     await expect(page).toHaveURL(/\/student\/candidate\/cand-/);
@@ -39,6 +47,9 @@ test.describe('Closed Election Constraints', () => {
     await page.fill('#manager-username-input', 'admin');
     await page.fill('#manager-password-input', 'admin123');
     await page.click('#btn-submit-login');
+    await expect(page).toHaveURL(/\/manager\/dashboard/);
+    await page.click('#card-club-management');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
     await page.click('#btn-toggle-election-status');
     await page.click('#btn-confirm-toggle-status');
     await expect(page.locator('text=Voting Closed')).toBeVisible();
@@ -47,6 +58,10 @@ test.describe('Closed Election Constraints', () => {
     await page.click('#btn-switch-role');
     await page.fill('#student-id-input', '23CS003');
     await page.click('#btn-enter-student');
+
+    // Click to enter Club Portal and Coding Club election system
+    await page.click('text=Club Elections Portal');
+    await page.click('text=Coding Club');
 
     // 5. Verify status badge shows CLOSED on dashboard
     await expect(page.locator('[role="status"]')).toContainText('Closed');

@@ -6,5 +6,6 @@ export const useReceiptQuery = (receiptId) => {
     queryKey: ['receipt', receiptId],
     queryFn: () => voteApi.getReceipt(receiptId),
     enabled: !!receiptId,
+    refetchInterval: 3000,
   });
 };

@@ -14,16 +14,18 @@ export const PageTransition = ({ children }) => {
       opacity: 1, 
       y: 0,
       transition: {
-        duration: shouldReduceMotion ? 0.05 : 0.3,
-        ease: 'easeOut',
+        type: 'spring',
+        stiffness: 100,
+        damping: 18,
       }
     },
     exit: { 
       opacity: 0, 
       y: shouldReduceMotion ? 0 : -15,
       transition: {
-        duration: shouldReduceMotion ? 0.05 : 0.2,
-        ease: 'easeIn',
+        type: 'spring',
+        stiffness: 120,
+        damping: 20,
       }
     }
   };

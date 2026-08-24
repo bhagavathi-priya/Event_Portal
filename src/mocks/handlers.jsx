@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { 
   election, 
+  eventElection,
   categories, 
   candidates, 
   votes, 
@@ -111,18 +112,24 @@ export const handlers = [
   }),
 
   // GET election metadata
-  http.get('/api/elections/:id', ({ params }) => {
-    if (election.id !== params.id) {
-      return HttpResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Election not found' } },
-        { status: 404 }
-      );
-    }
+  http.get('/api/elections/:id', ({ params, request }) => {
+    const url = new URL(request.url);
+    const module = url.searchParams.get('module') || 'club';
+    
+    const currentElection = module === 'event' ? eventElection : election;
+    const filteredCategories = categories.filter(c => {
+      if (module === 'event') {
+        return c.id.startsWith('ev-');
+      } else {
+        return !c.id.startsWith('ev-');
+      }
+    });
+
     return HttpResponse.json({
       success: true,
       data: {
-        election,
-        categories: categories.filter(c => c.electionId === params.id)
+        election: currentElection,
+        categories: filteredCategories
       }
     });
   }),
@@ -140,6 +147,14 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       data: filteredCandidates
+    });
+  }),
+
+  // GET all candidates
+  http.get('/api/candidates', () => {
+    return HttpResponse.json({
+      success: true,
+      data: candidates
     });
   }),
 
@@ -454,12 +469,8 @@ export const handlers = [
       );
     }
 
-    if (election.id !== params.id) {
-      return HttpResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Election not found.' } },
-        { status: 404 }
-      );
-    }
+    const url = new URL(request.url);
+    const module = url.searchParams.get('module') || 'club';
 
     let body;
     try {
@@ -479,11 +490,13 @@ export const handlers = [
       );
     }
 
-    setElectionStatus(status);
+    setElectionStatus(status, module);
+
+    const currentElection = module === 'event' ? eventElection : election;
 
     return HttpResponse.json({
       success: true,
-      data: election
+      data: currentElection
     });
   }),
 
@@ -496,27 +509,65 @@ export const handlers = [
       );
     }
 
-    if (election.id !== params.id) {
-      return HttpResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Election not found.' } },
-        { status: 404 }
-      );
+    const url = new URL(request.url);
+    const module = url.searchParams.get('module') || 'club';
+
+    const currentElection = module === 'event' ? eventElection : election;
+    const filteredCategories = categories.filter(c => {
+      if (module === 'event') {
+        return c.id.startsWith('ev-');
+      } else {
+        return !c.id.startsWith('ev-');
+      }
+    });
+
+    // If event module, dynamically count votes from localStorage 'voting_event_votes'
+    let storedEventVotes = [];
+    if (module === 'event' && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem('voting_event_votes');
+        if (raw) {
+          storedEventVotes = JSON.parse(raw);
+        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     // Aggregate tally results
-    // Return candidates grouped by category, with total votes and percentage
-    const categoryTallies = categories.map(cat => {
+    const categoryTallies = filteredCategories.map(cat => {
       const catCandidates = candidates.filter(c => c.categoryId === cat.id);
-      const totalCatVotes = catCandidates.reduce((sum, c) => sum + (c.votesCount || 0), 0);
+      
+      const items = catCandidates.map(c => {
+        let votesCount = c.votesCount || 0;
+        if (module === 'event') {
+          // Count occurrences of this option text in local storage event votes
+          votesCount = 0;
+          storedEventVotes.forEach(v => {
+            if (v.selections) {
+              Object.values(v.selections).forEach(val => {
+                if (val === c.name) {
+                  votesCount++;
+                }
+              });
+            }
+          });
+        }
+        
+        return {
+          candidateId: c.id,
+          candidateName: c.name,
+          imageUrl: c.imageUrl,
+          gender: c.gender || 'male',
+          votes: votesCount,
+          percentage: 0 // Will compute below
+        };
+      });
 
-      const items = catCandidates.map(c => ({
-        candidateId: c.id,
-        candidateName: c.name,
-        imageUrl: c.imageUrl,
-        gender: c.gender || 'male',
-        votes: c.votesCount || 0,
-        percentage: totalCatVotes > 0 ? Math.round(((c.votesCount || 0) / totalCatVotes) * 100) : 0
-      }));
+      const totalCatVotes = items.reduce((sum, item) => sum + item.votes, 0);
+      items.forEach(item => {
+        item.percentage = totalCatVotes > 0 ? Math.round((item.votes / totalCatVotes) * 100) : 0;
+      });
 
       // Sort candidates by votes descending
       items.sort((a, b) => b.votes - a.votes);
@@ -529,13 +580,17 @@ export const handlers = [
       };
     });
 
+    const totalVotesVolume = module === 'event' 
+      ? storedEventVotes.length 
+      : votes.length;
+
     return HttpResponse.json({
       success: true,
       data: {
-        electionId: election.id,
-        electionTitle: election.title,
-        status: election.status,
-        totalVotesCast: votes.length,
+        electionId: currentElection.id,
+        electionTitle: currentElection.title,
+        status: currentElection.status,
+        totalVotesCast: totalVotesVolume,
         tallies: categoryTallies
       }
     });

@@ -9,8 +9,9 @@ export const MotionTallyBar = ({ percentage, colorClass = 'bg-indigo-600' }) => 
     visible: { 
       width: `${percentage}%`,
       transition: {
-        duration: shouldReduceMotion ? 0 : 0.8,
-        ease: 'easeOut'
+        type: 'spring',
+        stiffness: 70,
+        damping: 12,
       }
     }
   };
@@ -18,6 +19,7 @@ export const MotionTallyBar = ({ percentage, colorClass = 'bg-indigo-600' }) => 
   return (
     <div className="relative w-full h-4 bg-slate-100 rounded-full dark:bg-slate-800 overflow-hidden">
       <motion.div
+        key={percentage}
         initial="hidden"
         animate="visible"
         variants={barVariants}

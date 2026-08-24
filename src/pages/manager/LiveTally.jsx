@@ -5,18 +5,24 @@ import { StatusBadge } from '../../components/common/StatusBadge';
 import { MotionTallyBar } from '../../components/motion/MotionTallyBar';
 import { PageTransition } from '../../components/motion/PageTransition';
 
-export const LiveTally = () => {
-  // Select active category for detailed bar inspection
-  const [activeCategoryId, setActiveCategoryId] = useState('cat-1');
+export const LiveTally = ({ module = 'club' }) => {
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
 
   // Queries
-  const { data: electionRes, isLoading: electionLoading } = useElectionQuery();
+  const { data: electionRes, isLoading: electionLoading } = useElectionQuery(module);
+  const categories = electionRes?.data?.categories || [];
+
+  React.useEffect(() => {
+    if (categories.length > 0 && !activeCategoryId) {
+      setActiveCategoryId(categories[0].id);
+    }
+  }, [categories, activeCategoryId]);
   
   // Calculate isElectionOpen dynamically
   const isElectionOpen = electionRes?.data?.election?.status === 'OPEN';
 
   // Fetch tally query, passing active status for polling
-  const { data: tallyRes, isLoading: tallyLoading, isRefetching } = useTallyQuery('election-1', null, isElectionOpen);
+  const { data: tallyRes, isLoading: tallyLoading, isRefetching } = useTallyQuery('election-1', module, isElectionOpen);
 
   const isLoading = electionLoading || tallyLoading;
 
@@ -29,11 +35,11 @@ export const LiveTally = () => {
     );
   }
 
-  const { election, categories } = electionRes?.data || { election: {}, categories: [] };
+  const { election } = electionRes?.data || { election: {} };
   const tally = tallyRes?.data || { totalVotesCast: 0, tallies: [] };
 
   const currentCategoryTally = tally.tallies.find(t => t.categoryId === activeCategoryId) || {
-    categoryId: activeCategoryId,
+    categoryId: activeCategoryId || '',
     categoryName: categories.find(c => c.id === activeCategoryId)?.name || 'Category',
     totalVotes: 0,
     candidates: []
@@ -143,19 +149,21 @@ export const LiveTally = () => {
                     {/* Candidate Info label */}
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={cand.imageUrl}
-                          alt={cand.candidateName}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-150 dark:border-slate-700"
-                          onError={(e) => {
-                            const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
-                            const gender = isFemale ? 'women' : 'men';
-                            const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
-                            const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
-                            e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
-                            e.target.onerror = null;
-                          }}
-                        />
+                        {module !== 'event' && (
+                          <img
+                            src={cand.imageUrl}
+                            alt={cand.candidateName}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-150 dark:border-slate-700"
+                            onError={(e) => {
+                              const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
+                              const gender = isFemale ? 'women' : 'men';
+                              const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
+                              const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
+                              e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+                              e.target.onerror = null;
+                            }}
+                          />
+                        )}
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-900 dark:text-white">
@@ -167,7 +175,9 @@ export const LiveTally = () => {
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-slate-450 font-mono uppercase tracking-wider">Candidate ID: {cand.candidateId}</span>
+                          <span className="text-[10px] text-slate-450 font-mono uppercase tracking-wider">
+                            {module === 'event' ? 'Option ID:' : 'Candidate ID:'} {cand.candidateId}
+                          </span>
                         </div>
                       </div>
 

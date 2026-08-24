@@ -19,7 +19,7 @@ test.describe('Role-Based Access Control (RBAC) Protections', () => {
     await expect(page).toHaveURL(/\/unauthorized/);
     await expect(page.locator('h1')).toContainText('Unauthorized Access');
 
-    await page.goto('/manager/candidates');
+    await page.goto('/manager/club/candidates');
     await expect(page).toHaveURL(/\/unauthorized/);
   });
 

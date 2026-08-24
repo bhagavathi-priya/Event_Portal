@@ -209,7 +209,10 @@ export const VoteReceipt = () => {
         {/* Action Buttons */}
         <div className="flex items-center gap-3 w-full print:hidden">
           <button
-            onClick={() => navigate('/student/dashboard')}
+            onClick={() => {
+              const clubId = receipt?.categoryId?.startsWith('cult-cat-') ? 'cultural' : 'coding';
+              navigate('/student/dashboard', { state: { selectedClubId: clubId } });
+            }}
             className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-900/25 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none text-center"
           >
             Dashboard

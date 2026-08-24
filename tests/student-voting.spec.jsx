@@ -17,9 +17,13 @@ test.describe('Student Voting Flow', () => {
     await page.click('#btn-submit-login');
     await expect(page).toHaveURL(/\/manager\/dashboard/);
 
+    // Enter Club workspace
+    await page.click('#card-club-management');
+    await expect(page).toHaveURL(/\/manager\/club\/dashboard/);
+
     // 2. Navigate to Candidate Management
-    await page.click('a[href="/manager/candidates"]');
-    await expect(page).toHaveURL(/\/manager\/candidates/);
+    await page.click('a[href="/manager/club/candidates"]');
+    await expect(page).toHaveURL(/\/manager\/club\/candidates/);
 
     // 3. Add Candidate "Alex Rivera"
     await page.click('#btn-add-candidate');
@@ -39,6 +43,10 @@ test.describe('Student Voting Flow', () => {
 
     // 6. Confirm redirected to Student Dashboard
     await expect(page).toHaveURL(/\/student\/dashboard/);
+
+    // Click to enter Club Portal and Coding Club election system
+    await page.click('text=Club Elections Portal');
+    await page.click('text=Coding Club');
 
     // 7. Click 'Browse Candidates' for 'Student Body President' category (cat-1)
     await page.click('a[href="/student/vote/cat-1"], button:has-text("Browse Candidates")');

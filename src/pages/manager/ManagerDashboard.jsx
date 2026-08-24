@@ -1,23 +1,106 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useElectionQuery } from '../../hooks/queries/useElectionQuery';
 import { useTallyQuery } from '../../hooks/queries/useTallyQuery';
 import { useElectionMutation } from '../../hooks/mutations/useElectionMutation';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { AnimatedModal } from '../../components/motion/AnimatedModal';
 import { PageTransition } from '../../components/motion/PageTransition';
-export const ManagerDashboard = () => {
+
+export const ManagerDashboard = ({ module }) => {
+  const navigate = useNavigate();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [statusError, setStatusError] = useState(null);
 
   // Queries
-  const { data: electionRes, isLoading: electionLoading, isError: electionError } = useElectionQuery();
+  const { data: electionRes, isLoading: electionLoading, isError: electionError } = useElectionQuery(module);
+  const isElectionOpen = electionRes?.data?.election?.status === 'OPEN';
   // Fetch tally data (not polling here, just for metrics)
-  const { data: tallyRes, isLoading: tallyLoading } = useTallyQuery('election-1');
+  const { data: tallyRes, isLoading: tallyLoading } = useTallyQuery('election-1', module, isElectionOpen);
 
   // Mutation
   const electionMutation = useElectionMutation();
 
   const isLoading = electionLoading || tallyLoading;
+
+  if (!module) {
+    return (
+      <PageTransition>
+        <div className="space-y-8 max-w-4xl mx-auto py-4">
+          <div className="relative bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white overflow-hidden shadow-lg border border-slate-800">
+            <div className="absolute right-0 bottom-0 translate-y-1/4 translate-x-1/6 w-64 h-64 rounded-full bg-indigo-500/10 blur-2xl" />
+            <div className="relative z-10 space-y-2">
+              <span className="text-xs font-bold uppercase tracking-widest text-indigo-400 bg-indigo-950/60 border border-indigo-900 px-2.5 py-0.5 rounded-full">
+                Manager Control Workspace
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Welcome, Administrative Portal!
+              </h1>
+              <p className="text-slate-400 text-sm max-w-xl">
+                Please select the system you want to manage. You can configure active candidates, monitor live results, and adjust voting windows independently.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Card 1: Club Management */}
+            <div 
+              id="card-club-management"
+              onClick={() => navigate('/manager/club/dashboard')}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 flex flex-col justify-between group"
+            >
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-955/20 text-indigo-650 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                  🏛️
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                    Club Management Portal
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Configure club-specific candidates, toggle club voting statuses, and view live results of student elections.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-8 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
+                <span>Enter Club Workspace</span>
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Card 2: Event Management */}
+            <div 
+              id="card-event-management"
+              onClick={() => navigate('/manager/event/dashboard')}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 flex flex-col justify-between group"
+            >
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-violet-50 dark:bg-violet-955/20 text-violet-650 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                  🎉
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                    Event Management Portal
+                  </h3>
+                  <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                    Manage event voting options, add/edit/delete topics, and monitor student decision polls in real time.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-8 flex items-center gap-2 text-violet-605 dark:text-violet-400 font-semibold text-sm">
+                <span>Enter Event Workspace</span>
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -41,7 +124,6 @@ export const ManagerDashboard = () => {
   const { election, categories } = electionRes.data;
   const tally = tallyRes?.data || { totalVotesCast: 0, tallies: [] };
 
-  const isElectionOpen = election.status === 'OPEN';
   const totalCandidates = tally.tallies.reduce((sum, category) => sum + category.candidates.length, 0);
 
   const handleToggleStatus = async () => {
@@ -51,6 +133,7 @@ export const ManagerDashboard = () => {
       const response = await electionMutation.mutateAsync({
         electionId: election.id,
         status: targetStatus,
+        module,
       });
       if (response.success) {
         setIsConfirmOpen(false);
@@ -63,6 +146,16 @@ export const ManagerDashboard = () => {
   return (
     <PageTransition>
       <div className="space-y-8">
+        
+        {/* Back navigation control */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate('/manager/dashboard')}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300 transition-colors"
+          >
+            ← Back to Portals
+          </button>
+        </div>
         
         {/* Banner with controls */}
         <div className="relative bg-slate-900 rounded-3xl p-6 sm:p-8 text-white overflow-hidden shadow-lg border border-slate-800">
@@ -134,7 +227,9 @@ export const ManagerDashboard = () => {
               </svg>
             </div>
             <div>
-              <span className="text-xs text-slate-450 dark:text-slate-400 uppercase tracking-wider font-semibold">Registered Candidates</span>
+              <span className="text-xs text-slate-450 dark:text-slate-400 uppercase tracking-wider font-semibold">
+                {module === 'event' ? 'Registered Options' : 'Registered Candidates'}
+              </span>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{totalCandidates}</h2>
             </div>
           </div>
@@ -153,36 +248,6 @@ export const ManagerDashboard = () => {
           </div>
         </div>
 
-        {/* Categories Overview List */}
-        <div className="bg-white border border-slate-205 dark:bg-slate-900 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-            Electoral Structure Summary
-          </h3>
-          <div className="divide-y divide-slate-105 dark:divide-slate-800">
-            {categories.map((category) => {
-              const catTally = tally.tallies.find(t => t.categoryId === category.id);
-              const candidatesInCat = catTally ? catTally.candidates.length : 0;
-              const votesInCat = catTally ? catTally.totalVotes : 0;
-
-              return (
-                <div key={category.id} className="py-3 flex justify-between items-center text-sm first:pt-0 last:pb-0">
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">{category.name}</span>
-                    <span className="text-xs text-slate-500 font-mono">{category.id}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs font-semibold">
-                    <span className="text-slate-500">
-                      {candidatesInCat} Candidates
-                    </span>
-                    <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300">
-                      {votesInCat} Votes Cast
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
 
         {/* Confirmation Modal */}

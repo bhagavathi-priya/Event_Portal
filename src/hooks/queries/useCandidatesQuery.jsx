@@ -6,5 +6,6 @@ export const useCandidatesQuery = (categoryId) => {
     queryKey: ['candidates', categoryId],
     queryFn: () => candidateApi.getCandidatesForCategory(categoryId),
     enabled: !!categoryId, // Only execute query if categoryId is provided
+    refetchInterval: 3000,
   });
 };

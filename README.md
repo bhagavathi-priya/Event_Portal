@@ -14,13 +14,14 @@ The portal supports two authenticated roles with credentials validated against t
     *   Review ballot before submission and receive a signed cryptographic receipt.
     *   **Student ID range restriction**: Logins are restricted to registered student IDs in the range **`23CS001` to `23CS050`**. IDs outside this range are rejected with a warning.
     *   **Secret Ballot Receipts**: Receipts display the voter ID, category, date (e.g. `23 August 2026`), and time (e.g. `10:45:32 AM`), but explicitly hide the candidate selected to protect secret-ballot voting privacy.
+    *   **Receipt Dashboard & Print Actions**: Receipts (for both Clubs and Events) feature standardized **Dashboard** and **Print** buttons. Clicking the Dashboard button seamlessly routes the student back to the Student Dashboard (restoring their selected club tab).
     *   Cannot add/edit candidates, toggle election windows, or view live tally charts.
 *   **Election Manager**:
     *   Requires logging in at `/manager/login` with credentials:
         *   **Username/Email**: `admin` or `admin123@gmail.com`
         *   **Password**: `admin123`
-    *   Access manager dashboards to control the active election status (OPEN / CLOSED).
-    *   Perform full CRUD operations on candidates (Add, Edit, Delete).
+    *   **Split Workspace Dashboards**: Separate **Club Management Portal** and **Event Management Portal** views with independent election status tracking (OPEN / CLOSED) and decoupled real-time live tally metrics.
+    *   Perform full CRUD operations on candidates and options (Add, Edit, Delete).
     *   **Gender-Based Profile Photos**: Candidates can be registered as Male or Female. The mock backend automatically assigns a random photo from the corresponding gender folder. The frontend includes a smart `onError` handler that falls back to high-quality portraits/emojis if the local files are missing on disk.
     *   **Placeholder Auto-Swapping**: Editing a candidate's gender dynamically clears and swaps their placeholder image path to match the updated gender.
     *   View real-time Leaderboards and Live Tally bar charts.
@@ -32,14 +33,14 @@ The portal supports two authenticated roles with credentials validated against t
 *   **Network Interception**: Emulated server interactions via **MSW v2** intercepting standard HTTP routes.
 *   **LocalStorage Persistence**: Mock databases (elections, categories, candidates, votes, receipts) are stored in the browser's `localStorage` so that data modifications (like candidate updates or cast votes) survive browser refreshes and PC shutdowns.
 
-### 3. Caching & Real-Time Polling
+### 3. Real-Time Synchronization & Caching
 *   Queries and mutations are managed by **TanStack React Query v5**.
-*   When voting is open, the Manager Tally dashboard initiates **real-time background polling** (every 3 seconds) to dynamically update vote percentages and active charts as ballots are submitted.
+*   **Real-time synchronization** is enabled for both Manager and Student portals using background polling (every 3 seconds). If the Manager adds, edits, or deletes any candidate/option/category, the changes are automatically reflected on the student ballot screens in real time.
 
-### 4. Interactive Framer Motion UI
-*   Smooth, hardware-accelerated slide-up page transitions.
-*   Interactive micro-animations for candidate hover states and confirmation modals.
-*   Animated leader progress bars growing from 0% to the target percentage.
+### 4. Interactive Framer Motion UI & Styling
+*   **Rich Aesthetics**: The UI features curated harmonized colors (deep indigo, violet, slate), dark mode compatibility, and glassmorphism styling tokens.
+*   **Transition Micro-animations**: Smooth, hardware-accelerated slide-up page transitions, interactive confirmation dialogs, and progress bars.
+*   **Consistent Hover Feedback**: All interactive cards (landing selection cards, club/event selection cards, candidate discovery cards, and manager modules) feature consistent hover states. Hovering over a card dynamically changes only its heading text to blue (`indigo-600`) while preserving all other elements.
 *   **Accessibility Overrides**: Listens to system preferences (`prefers-reduced-motion`) to automatically suppress transitions for users who prefer it.
 
 ---
