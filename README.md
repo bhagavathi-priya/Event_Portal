@@ -13,7 +13,7 @@ The portal supports two authenticated roles with credentials validated against t
     *   Cast exactly one vote per category (e.g. President, Vice President, Treasurer).
     *   Review ballot before submission and receive a signed cryptographic receipt.
     *   **Student ID range restriction**: Logins are restricted to registered student IDs in the range **`23CS001` to `23CS050`**. IDs outside this range are rejected with a warning.
-    *   **Secret Ballot Receipts**: Receipts display the voter ID, category, date (e.g. `23 August 2026`), and time (e.g. `10:45:32 AM`), but explicitly hide the candidate selected to protect secret-ballot voting privacy.
+    *   **Secret Ballot Receipts**: Receipts display the voter ID, category (fully visible with high-contrast `dark:text-slate-300` styling), date (e.g. `25 August 2026`), and time (e.g. `10:45:32 AM`), but explicitly hide the candidate selected to protect secret-ballot voting privacy.
     *   **Receipt Dashboard & Print Actions**: Receipts (for both Clubs and Events) feature standardized **Dashboard** and **Print** buttons. Clicking the Dashboard button seamlessly routes the student back to the Student Dashboard (restoring their selected club tab).
     *   Cannot add/edit candidates, toggle election windows, or view live tally charts.
 *   **Election Manager**:
@@ -24,7 +24,8 @@ The portal supports two authenticated roles with credentials validated against t
     *   Perform full CRUD operations on candidates and options (Add, Edit, Delete).
     *   **Gender-Based Profile Photos**: Candidates can be registered as Male or Female. The mock backend automatically assigns a random photo from the corresponding gender folder. The frontend includes a smart `onError` handler that falls back to high-quality portraits/emojis if the local files are missing on disk.
     *   **Placeholder Auto-Swapping**: Editing a candidate's gender dynamically clears and swaps their placeholder image path to match the updated gender.
-    *   View real-time Leaderboards and Live Tally bar charts.
+    *   **Proportional Live Tally Progress Bars**: Every candidate/option displays their own progress bar filled according to their exact vote percentage, styled in standard Tailwind colors (`bg-indigo-600` and `bg-amber-500` for leaders) for full light and dark mode compatibility.
+    *   **Event Category Question Indicators**: Displays an uppercase label for the question category on the left, and a dedicated, rounded accent badge on the right displaying the total count (`X Questions`) in clear, readable text.
     *   Cannot cast votes or access student ballot actions.
 
 *Security is enforced at three levels: Route-level protection (`ProtectedRoute.jsx`), UI-action gating (`PermissionGate.jsx`), and Mock API headers validation (returns `403 Forbidden` for violations).*
@@ -42,6 +43,7 @@ The portal supports two authenticated roles with credentials validated against t
 *   **Rich Aesthetics**: The UI features curated harmonized colors (deep indigo, violet, slate), dark mode compatibility, and glassmorphism styling tokens.
 *   **Transition Micro-animations**: Smooth, hardware-accelerated slide-up page transitions, interactive confirmation dialogs, and progress bars.
 *   **Consistent Hover Feedback**: All interactive cards (landing selection cards, club/event selection cards, candidate discovery cards, and manager modules) feature consistent hover states. Hovering over a card dynamically changes only its heading text to blue (`indigo-600`) while preserving all other elements.
+*   **Unified Back Buttons**: Standardized back-navigation buttons across all portals (Receipts, Student Dashboard, Candidate Discovery, Details, Manager Login, and Managers Dashboard) using clean outlines, scaling triggers, and active press transitions.
 *   **Accessibility Overrides**: Listens to system preferences (`prefers-reduced-motion`) to automatically suppress transitions for users who prefer it.
 
 ---

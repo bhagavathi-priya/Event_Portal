@@ -137,7 +137,7 @@ export const ManagerLogin = () => {
               type="button"
               onClick={() => navigate('/role-selection')}
               disabled={loading}
-              className="w-full py-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-550"
+              className="w-full py-2.5 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-750 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow active:scale-[0.98] outline-none"
             >
               Back to Role Selection
             </button>

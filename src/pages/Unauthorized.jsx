@@ -41,7 +41,7 @@ export const Unauthorized = () => {
         <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleGoDashboard}
-            className="flex-1 py-2 bg-indigo-650 hover:bg-indigo-750 text-white rounded-lg text-sm font-semibold shadow-lg shadow-indigo-950/25 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none"
+            className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-lg shadow-indigo-950/25 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none"
           >
             Go to Dashboard
           </button>

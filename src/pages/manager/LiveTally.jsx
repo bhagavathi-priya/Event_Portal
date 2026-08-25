@@ -1,22 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useElectionQuery } from '../../hooks/queries/useElectionQuery';
 import { useTallyQuery } from '../../hooks/queries/useTallyQuery';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { MotionTallyBar } from '../../components/motion/MotionTallyBar';
 import { PageTransition } from '../../components/motion/PageTransition';
 
 export const LiveTally = ({ module = 'club' }) => {
-  const [activeCategoryId, setActiveCategoryId] = useState(null);
-
   // Queries
   const { data: electionRes, isLoading: electionLoading } = useElectionQuery(module);
   const categories = electionRes?.data?.categories || [];
-
-  React.useEffect(() => {
-    if (categories.length > 0 && !activeCategoryId) {
-      setActiveCategoryId(categories[0].id);
-    }
-  }, [categories, activeCategoryId]);
   
   // Calculate isElectionOpen dynamically
   const isElectionOpen = electionRes?.data?.election?.status === 'OPEN';
@@ -30,7 +21,7 @@ export const LiveTally = ({ module = 'club' }) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-slate-500 dark:text-slate-455 text-sm font-semibold">Loading live vote counts...</p>
+        <p className="text-slate-505 dark:text-slate-455 text-sm font-semibold">Loading live vote counts...</p>
       </div>
     );
   }
@@ -38,21 +29,48 @@ export const LiveTally = ({ module = 'club' }) => {
   const { election } = electionRes?.data || { election: {} };
   const tally = tallyRes?.data || { totalVotesCast: 0, tallies: [] };
 
-  const currentCategoryTally = tally.tallies.find(t => t.categoryId === activeCategoryId) || {
-    categoryId: activeCategoryId || '',
-    categoryName: categories.find(c => c.id === activeCategoryId)?.name || 'Category',
-    totalVotes: 0,
-    candidates: []
-  };
+  // Group categories by parent category dynamically
+  const parentGroups = {};
+  
+  tally.tallies.forEach(catTally => {
+    const catObj = categories.find(c => c.id === catTally.categoryId);
+    if (!catObj || !catObj.parentId) return; // skip parent categories themselves
 
-  // Color cycles for candidate progress bars
-  const barColors = [
-    'bg-indigo-600 dark:bg-indigo-500',
-    'bg-violet-605 dark:bg-violet-500',
-    'bg-fuchsia-600 dark:bg-fuchsia-500',
-    'bg-emerald-600 dark:bg-emerald-500',
-    'bg-sky-650 dark:bg-sky-500',
-  ];
+    const parentObj = categories.find(c => c.id === catObj.parentId);
+    if (!parentObj) return;
+
+    const parentName = parentObj.name;
+    const itemLabel = catObj.name;
+
+    if (!parentGroups[parentObj.id]) {
+      parentGroups[parentObj.id] = {
+        id: parentObj.id,
+        name: parentName,
+        items: []
+      };
+    }
+
+    let highestOption = null;
+    if (catTally.candidates.length > 0) {
+      let maxVotes = -1;
+      catTally.candidates.forEach(c => {
+        if (c.votes > maxVotes) {
+          maxVotes = c.votes;
+          highestOption = c;
+        }
+      });
+    }
+
+    parentGroups[parentObj.id].items.push({
+      categoryId: catTally.categoryId,
+      itemLabel: itemLabel,
+      totalVotes: catTally.totalVotes,
+      candidates: catTally.candidates,
+      highestOption: highestOption
+    });
+  });
+
+  const groupedItems = Object.values(parentGroups);
 
   return (
     <PageTransition>
@@ -70,7 +88,10 @@ export const LiveTally = ({ module = 'club' }) => {
               )}
             </div>
             <p className="text-slate-500 dark:text-slate-450 text-sm mt-0.5">
-              Monitor voter turn-out metrics and category leaderboards in real-time.
+              {module === 'event' 
+                ? 'Monitor voter turn-out metrics and event-decision leaderboards in real-time.'
+                : 'Monitor voter turn-out metrics and active club leaderboards in real-time.'
+              }
             </p>
           </div>
 
@@ -102,106 +123,112 @@ export const LiveTally = ({ module = 'club' }) => {
           </div>
         </div>
 
-        {/* Categories Tab Selector */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 overflow-x-auto gap-2">
-          {categories.map((cat) => {
-            const catTally = tally.tallies.find(t => t.categoryId === cat.id);
-            const votesCount = catTally ? catTally.totalVotes : 0;
-
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategoryId(cat.id)}
-                className={`py-3 px-4 text-sm font-semibold border-b-2 whitespace-nowrap transition-all flex items-center gap-2 outline-none focus-visible:text-indigo-650 ${
-                  activeCategoryId === cat.id
-                    ? 'border-indigo-600 text-indigo-605 dark:text-indigo-400 dark:border-indigo-400'
-                    : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-450 dark:hover:text-white'
-                }`}
-              >
-                {cat.name}
-                <span className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold">
-                  {votesCount}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Live Leaderboards Bar Chart area */}
-        <div className="bg-white border border-slate-205 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
-          <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              {currentCategoryTally.categoryName} Results
-            </h3>
-            <p className="text-xs text-slate-450 mt-0.5">
-              Ordered by volume of votes. Total of {currentCategoryTally.totalVotes} votes cast.
+        {/* Dynamic Leaderboards */}
+        {groupedItems.length === 0 ? (
+          <div className="text-center py-16 bg-white border border-slate-205 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-sm">
+            <span className="text-slate-400 text-4xl">📊</span>
+            <p className="text-sm text-slate-500 mt-2 font-medium">
+              {module === 'event' ? 'No active event decisions configured yet.' : 'No active clubs configured yet.'}
             </p>
           </div>
+        ) : (
+          <div className="space-y-8">
+            {groupedItems.map((parent) => (
+              <div key={parent.id} className="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+                {/* Parent Title */}
+                <div className="flex items-center gap-2 border-b border-slate-105 dark:border-slate-805 pb-3">
+                  <span className="text-2xl">{module === 'event' ? '📅' : '🏛️'}</span>
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                    {parent.name}
+                  </h2>
+                </div>
 
-          {currentCategoryTally.candidates.length > 0 ? (
-            <div className="space-y-6">
-              {currentCategoryTally.candidates.map((cand, idx) => {
-                const colorClass = barColors[idx % barColors.length];
-                const isLeader = idx === 0 && cand.votes > 0;
-
-                return (
-                  <div key={cand.candidateId} className="space-y-2">
-                    {/* Candidate Info label */}
-                    <div className="flex justify-between items-end">
-                      <div className="flex items-center gap-3">
-                        {module !== 'event' && (
-                          <img
-                            src={cand.imageUrl}
-                            alt={cand.candidateName}
-                            className="w-8 h-8 rounded-full object-cover border border-slate-150 dark:border-slate-700"
-                            onError={(e) => {
-                              const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
-                              const gender = isFemale ? 'women' : 'men';
-                              const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
-                              const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
-                              e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
-                              e.target.onerror = null;
-                            }}
-                          />
-                        )}
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-slate-900 dark:text-white">
-                              {cand.candidateName}
+                {/* Subcategories (Questions or Positions) Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {parent.items.map((item) => {
+                    return (
+                      <div key={item.categoryId} className="p-5 bg-slate-50 dark:bg-slate-950/40 border border-slate-105 dark:border-slate-850 rounded-2xl space-y-4 flex flex-col justify-between">
+                        <div className="space-y-3">
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-855 dark:text-slate-200">
+                              {item.itemLabel}
+                            </h3>
+                            <span className="text-[10px] text-slate-455 font-mono uppercase tracking-wider">
+                              Total Votes: {item.totalVotes}
                             </span>
-                            {isLeader && (
-                              <span className="inline-flex items-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-150 px-1.5 py-0.2 rounded-md uppercase dark:bg-indigo-950/30 dark:text-indigo-400 dark:border-indigo-900">
-                                Leader
-                              </span>
-                            )}
                           </div>
-                          <span className="text-[10px] text-slate-450 font-mono uppercase tracking-wider">
-                            {module === 'event' ? 'Option ID:' : 'Candidate ID:'} {cand.candidateId}
-                          </span>
+
+                          <div className="space-y-3">
+                            {item.candidates.map((cand) => {
+                              const isHighest = item.highestOption && item.highestOption.candidateId === cand.candidateId && item.highestOption.votes > 0;
+
+                              return (
+                                <div key={cand.candidateId} className="space-y-1">
+                                  <div className="flex justify-between items-center text-xs">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      {module !== 'event' && (
+                                        <img
+                                          src={cand.imageUrl}
+                                          alt={cand.candidateName}
+                                          className="w-6 h-6 rounded-full object-cover border border-slate-150 dark:border-slate-750 shrink-0"
+                                          onError={(e) => {
+                                            const isFemale = (cand.gender === 'female' || cand.imageUrl?.includes('/female/'));
+                                            const gender = isFemale ? 'women' : 'men';
+                                            const match = (cand.imageUrl || '').match(/\/(\d+)\.jpg$/);
+                                            const index = match ? match[1] : Math.floor(Math.random() * 50) + 1;
+                                            e.target.src = `https://randomuser.me/api/portraits/${gender}/${index}.jpg`;
+                                            e.target.onerror = null;
+                                          }}
+                                        />
+                                      )}
+                                      <span className="font-semibold text-slate-700 dark:text-slate-350 truncate">
+                                        {cand.candidateName}
+                                      </span>
+                                      {isHighest && (
+                                        <span className="inline-flex items-center text-[8px] font-bold text-amber-700 bg-amber-50 border border-amber-150 px-1 rounded uppercase dark:bg-amber-955/20 dark:text-amber-400 dark:border-amber-900 shrink-0">
+                                          ★ Lead
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="font-bold text-slate-800 dark:text-slate-200 shrink-0 ml-1">
+                                      {cand.votes} ({cand.percentage}%)
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full transition-all duration-550 ${
+                                        isHighest ? 'bg-amber-500' : 'bg-indigo-600'
+                                      }`}
+                                      style={{ width: `${cand.percentage}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
+
+                        {/* Leader summary block */}
+                        {item.highestOption && item.highestOption.votes > 0 ? (
+                          <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-655 dark:text-slate-400">
+                            <span>Leading Option:</span>
+                            <span className="font-bold text-amber-600 dark:text-amber-450 truncate max-w-[120px]">
+                              {item.highestOption.candidateName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="pt-2 border-t border-dashed border-slate-200 dark:border-slate-800 text-xs text-slate-400 italic">
+                            No votes cast yet.
+                          </div>
+                        )}
                       </div>
-
-                      {/* Vote Count / Percent Info */}
-                      <div className="text-right">
-                        <span className="text-sm font-black text-slate-900 dark:text-white">{cand.votes} votes</span>
-                        <span className="text-xs text-slate-500 font-semibold ml-2">({cand.percentage}%)</span>
-                      </div>
-                    </div>
-
-                    {/* Animated Tally Bar */}
-                    <MotionTallyBar percentage={cand.percentage} colorClass={colorClass} />
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <span className="text-slate-400 text-4xl">📊</span>
-              <p className="text-sm text-slate-500 mt-2 font-medium">No candidates registered in this category.</p>
-            </div>
-          )}
-        </div>
-
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </PageTransition>
   );

@@ -74,14 +74,14 @@ export const StudentDashboard = () => {
 
   const { data: allCandsRes, isLoading: allCandsLoading } = useQuery({
     queryKey: ['candidates', 'all'],
-    queryFn: () => axiosClient.get('/api/candidates').then(res => res.data),
+    queryFn: () => axiosClient.get('/api/candidates'),
     refetchInterval: 3000
   });
 
   if (electionLoading || statusLoading || eventElectionLoading || allCandsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="w-12 h-12 border-4 border-indigo-650 border-t-transparent rounded-full animate-spin mb-4" />
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-slate-500 dark:text-slate-455 text-sm font-semibold">Loading dashboard portal...</p>
       </div>
     );
@@ -106,35 +106,20 @@ export const StudentDashboard = () => {
   
   // Group categories by club dynamically
   const clubGroups = {};
-  categories.forEach(cat => {
-    let clubId = '';
-    let clubName = '';
+  
+  // Find all active parent club categories
+  const parentClubs = categories.filter(c => c.id.startsWith('club-cat-') && c.status === 'ACTIVE');
+  
+  parentClubs.forEach(club => {
+    // Find positions belonging to this parent club
+    const positions = categories.filter(pos => pos.parentId === club.id);
     
-    if (cat.id.startsWith('cult-cat-')) {
-      clubId = 'cultural';
-      clubName = 'Cultural Club';
-    } else if (cat.id.startsWith('cat-')) {
-      clubId = 'coding';
-      clubName = 'Coding Club';
-    } else if (cat.id.includes('-cat-') || cat.id.endsWith('-cat')) {
-      const prefix = cat.id.split('-cat-')[0] || cat.id.split('-cat')[0];
-      clubId = prefix;
-      clubName = prefix.charAt(0).toUpperCase() + prefix.slice(1) + ' Club';
-    } else if (!cat.id.startsWith('ev-')) {
-      clubId = 'coding';
-      clubName = 'Coding Club';
-    } else {
-      return;
-    }
-    
-    if (!clubGroups[clubId]) {
-      clubGroups[clubId] = {
-        id: clubId,
-        name: clubName,
-        categories: []
-      };
-    }
-    clubGroups[clubId].categories.push(cat);
+    clubGroups[club.id] = {
+      id: club.id,
+      name: club.name,
+      description: club.description || '',
+      categories: positions
+    };
   });
 
   const presentClubs = Object.values(clubGroups);
@@ -152,120 +137,32 @@ export const StudentDashboard = () => {
   const isElectionOpen = election.status === 'OPEN';
 
   const eventCategories = eventElectionRes?.data?.categories || [];
+  
+  // Filter active parent Event Categories (starts with 'ev-cat-' and status is 'ACTIVE')
+  const parentEvents = eventCategories.filter(
+    cat => cat.id.startsWith('ev-cat-') && cat.status === 'ACTIVE'
+  );
 
-  // Group categories by event name prefix
-  const eventGroups = {};
-  eventCategories.forEach(cat => {
-    const parts = cat.name.split(' - ');
-    const eventName = parts[0] || 'Event';
-    const questionLabel = parts[1] || cat.name;
-    
-    // Group key based on category id prefix (e.g. 'symp', 'fest', 'work')
-    let eventId = 'symposium';
-    if (cat.id.includes('-fest-') || cat.id.startsWith('ev-fest')) eventId = 'fest';
-    else if (cat.id.includes('-work-') || cat.id.startsWith('ev-work')) eventId = 'workshop';
-    else if (cat.id.includes('-symp-') || cat.id.startsWith('ev-symp')) eventId = 'symposium';
-    else {
-      eventId = eventName.toLowerCase().split(' ')[0] || 'event';
-    }
-
-    if (!eventGroups[eventId]) {
-      let desc = '';
-      if (eventId === 'symposium') desc = 'Vote on preferred event themes, technical domains, and keynote topics.';
-      else if (eventId === 'fest') desc = 'Vote on cultural theme names and main stage competitions.';
-      else if (eventId === 'workshop') desc = 'Vote on hands-on topics and optimization challenges.';
-      else desc = `Vote on decisions for ${eventName}.`;
-
-      eventGroups[eventId] = {
-        id: eventId,
-        name: eventName,
-        description: desc,
-        questions: []
-      };
-    }
-
-    // Keep name in sync with what is currently stored/edited
-    eventGroups[eventId].name = eventName;
-
-    // Retrieve candidates/options for this category dynamically
-    const options = allCandidates
-      .filter(c => c.categoryId === cat.id)
-      .map(c => c.name);
-
-    let defaultOptions = [];
-    if (cat.id === 'ev-symp-theme') defaultOptions = ['🤖 AI & Future Technologies', '🌐 Digital Innovation & Smart Future', '🚀 Technology Beyond Boundaries'];
-    else if (cat.id === 'ev-symp-domain') defaultOptions = ['🤖 Artificial Intelligence & Machine Learning', '🔐 Cybersecurity & Ethical Hacking', '☁️ Cloud Computing & DevOps'];
-    else if (cat.id === 'ev-symp-topic') defaultOptions = ['How AI is Transforming the Future of Technology', 'Career Opportunities in Software Development', 'Cybersecurity in the Modern Digital World'];
-    else if (cat.id === 'ev-fest-theme') defaultOptions = ['🎉 Carnival of Creativity', '✨ Rhythm of Youth', '🚀 Beyond the Ordinary'];
-    else if (cat.id === 'ev-fest-activity') defaultOptions = ['🎤 Singing Competition', '🎭 Drama & Theatre', '👗 Fashion Show'];
-    else if (cat.id === 'ev-work-topic') defaultOptions = ['🌐 Full Stack Web Development', '🔐 Cybersecurity & Ethical Hacking', '☁️ Cloud Computing & DevOps'];
-    else if (cat.id === 'ev-work-session') defaultOptions = ['💻 Build a Real-Time Web Application', '🔐 Cybersecurity Challenge and Capture-the-Flag', '🤖 Develop a Simple AI/ML Project'];
-
-    eventGroups[eventId].questions.push({
-      key: cat.id,
-      label: questionLabel,
-      options: options.length > 0 ? options : defaultOptions
-    });
+  const events = parentEvents.map(parent => {
+    // Find child questions for this parent Category
+    const questions = eventCategories.filter(q => q.parentId === parent.id);
+    return {
+      id: parent.id,
+      name: parent.name,
+      description: parent.description || 'Vote on student preferences.',
+      questions: questions.map(q => {
+        // Options for this question
+        const options = allCandidates
+          .filter(c => c.categoryId === q.id)
+          .map(c => c.name);
+        return {
+          key: q.id,
+          label: q.name,
+          options: options
+        };
+      })
+    };
   });
-
-  const events = Object.values(eventGroups).length > 0 ? Object.values(eventGroups) : [
-    {
-      id: 'symposium',
-      name: 'College Symposium',
-      description: 'Vote on preferred event themes, technical domains, and keynote topics.',
-      questions: [
-        {
-          key: 'ev-symp-theme',
-          label: 'Preferred Event Theme',
-          options: ['🤖 AI & Future Technologies', '🌐 Digital Innovation & Smart Future', '🚀 Technology Beyond Boundaries']
-        },
-        {
-          key: 'ev-symp-domain',
-          label: 'Best Technical Domain',
-          options: ['🤖 Artificial Intelligence & Machine Learning', '🔐 Cybersecurity & Ethical Hacking', '☁️ Cloud Computing & DevOps']
-        },
-        {
-          key: 'ev-symp-topic',
-          label: 'Guest Speaker Topic',
-          options: ['How AI is Transforming the Future of Technology', 'Career Opportunities in Software Development', 'Cybersecurity in the Modern Digital World']
-        }
-      ]
-    },
-    {
-      id: 'fest',
-      name: 'Cultural Fest',
-      description: 'Vote on cultural theme names and main stage competitions.',
-      questions: [
-        {
-          key: 'ev-fest-theme',
-          label: 'Preferred Theme Name',
-          options: ['🎉 Carnival of Creativity', '✨ Rhythm of Youth', '🚀 Beyond the Ordinary']
-        },
-        {
-          key: 'ev-fest-activity',
-          label: 'Preferred Main Activity',
-          options: ['🎤 Singing Competition', '🎭 Drama & Theatre', '👗 Fashion Show']
-        }
-      ]
-    },
-    {
-      id: 'workshop',
-      name: 'Technical Workshop',
-      description: 'Vote on hands-on topics and optimization challenges.',
-      questions: [
-        {
-          key: 'ev-work-topic',
-          label: 'Preferred Workshop Topic',
-          options: ['🌐 Full Stack Web Development', '🔐 Cybersecurity & Ethical Hacking', '☁️ Cloud Computing & DevOps']
-        },
-        {
-          key: 'ev-work-session',
-          label: 'Hands-on Session Type',
-          options: ['💻 Build a Real-Time Web Application', '🔐 Cybersecurity Challenge and Capture-the-Flag', '🤖 Develop a Simple AI/ML Project']
-        }
-      ]
-    }
-  ];
 
   const handleEventSubmit = (e) => {
     e.preventDefault();
@@ -276,6 +173,7 @@ export const StudentDashboard = () => {
     }
 
     const eventObj = events.find(ev => ev.id === selectedEventId);
+    if (!eventObj) return;
     
     // Validate all questions are answered
     const unanswered = eventObj.questions.some(q => !formSelections[q.key]);
@@ -335,11 +233,11 @@ export const StudentDashboard = () => {
                 className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 flex flex-col justify-between group"
               >
                 <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 text-indigo-650 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-955/20 text-indigo-600 flex items-center justify-center text-2xl group-hover:scale-105 transition-transform">
                     🏛️
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                       Club Elections Portal
                     </h3>
                     <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
@@ -365,7 +263,7 @@ export const StudentDashboard = () => {
                     🎉
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                       Event Decisions Portal
                     </h3>
                     <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
@@ -390,7 +288,7 @@ export const StudentDashboard = () => {
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setActiveView('portal-selection')}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl shadow-sm hover:shadow active:scale-[0.98] transition-all duration-200 outline-none"
               >
                 ← Back to Portals
               </button>
@@ -403,39 +301,46 @@ export const StudentDashboard = () => {
                   Present Active Clubs
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {presentClubs.map((club) => {
-                    const isCultural = club.id === 'cultural';
-                    const themeColor = isCultural ? 'violet' : 'indigo';
-                    
-                    return (
-                      <div 
-                        key={club.id}
-                        onClick={() => {
-                          setActiveView('club-elections');
-                          setSelectedClubId(club.id);
-                        }}
-                        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 flex flex-col justify-between group"
-                      >
-                        <div className="space-y-3">
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold text-${themeColor}-700 bg-${themeColor}-50 border border-${themeColor}-150 px-2 py-0.5 rounded-full dark:bg-${themeColor}-955/20 dark:text-${themeColor}-400`}>
-                            Elections Open
-                          </span>
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
-                            {club.name}
-                          </h3>
-                          <p className="text-xs text-slate-500 leading-relaxed">
-                            Currently conducting elections for student representatives. Click to view candidates and cast your vote.
-                          </p>
+                  {presentClubs.length === 0 ? (
+                    <div className="col-span-full text-center py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm">
+                      <span className="text-slate-400 text-4xl">🏛️</span>
+                      <p className="text-sm text-slate-500 mt-2 font-medium">No active club elections configured yet.</p>
+                    </div>
+                  ) : (
+                    presentClubs.map((club, idx) => {
+                      const colors = ['indigo', 'violet', 'fuchsia'];
+                      const themeColor = colors[idx % colors.length];
+                      
+                      return (
+                        <div 
+                          key={club.id}
+                          onClick={() => {
+                            setActiveView('club-elections');
+                            setSelectedClubId(club.id);
+                          }}
+                          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md cursor-pointer transition-all hover:-translate-y-1 flex flex-col justify-between group"
+                        >
+                          <div className="space-y-3">
+                            <span className={`inline-flex items-center gap-1 text-[10px] font-bold text-${themeColor}-700 bg-${themeColor}-50 border border-${themeColor}-150 px-2 py-0.5 rounded-full dark:bg-${themeColor}-955/20 dark:text-${themeColor}-400`}>
+                              Elections Open
+                            </span>
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                              {club.name}
+                            </h3>
+                            <p className="text-xs text-slate-500 leading-relaxed">
+                              {club.description || 'Currently conducting elections for student representatives. Click to view candidates and cast your vote.'}
+                            </p>
+                          </div>
+                          <div className={`mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-${themeColor}-600 dark:text-${themeColor}-400 text-xs font-bold`}>
+                            <span>Enter Election System</span>
+                            <svg className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </div>
                         </div>
-                        <div className={`mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center gap-1.5 text-${themeColor}-600 dark:text-${themeColor}-400 text-xs font-bold`}>
-                          <span>Enter Election System</span>
-                          <svg className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
@@ -451,7 +356,7 @@ export const StudentDashboard = () => {
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-400">
                         Elections Completed
                       </span>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                         Photography Club
                       </h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
@@ -466,7 +371,7 @@ export const StudentDashboard = () => {
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-400">
                         Elections Completed
                       </span>
-                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                      <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                         Music Club
                       </h3>
                       <p className="text-xs text-slate-500 leading-relaxed">
@@ -489,7 +394,7 @@ export const StudentDashboard = () => {
                   setActiveView('club');
                   setSelectedClubId(null);
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl shadow-sm hover:shadow active:scale-[0.98] transition-all duration-200 outline-none"
               >
                 ← Back to Clubs
               </button>
@@ -574,14 +479,14 @@ export const StudentDashboard = () => {
                                 Closed
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-650 bg-indigo-50 dark:bg-indigo-955/30 dark:text-indigo-400 px-2.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-900">
+                              <span className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-955/30 dark:text-indigo-400 px-2.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-900">
                                 Ballot Available
                               </span>
                             )}
                           </div>
 
                           <div>
-                            <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                               {category.name}
                             </h3>
                             <p className="text-xs text-slate-500 mt-1">
@@ -653,7 +558,7 @@ export const StudentDashboard = () => {
                     setActiveView('portal-selection');
                   }
                 }}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-750 dark:text-slate-300 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl shadow-sm hover:shadow active:scale-[0.98] transition-all duration-200 outline-none"
               >
                 {selectedEventId ? '← Back to Events' : '← Back to Portals'}
               </button>
@@ -693,12 +598,19 @@ export const StudentDashboard = () => {
                               </span>
                             )}
                           </div>
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
                             {event.name}
                           </h3>
-                          <p className="text-xs text-slate-500 leading-relaxed">
+                          <p className="text-xs text-slate-505 leading-relaxed">
                             {event.description}
                           </p>
+                          
+                          <div className="bg-slate-50 dark:bg-slate-950/40 rounded-xl p-2.5 border border-slate-105 dark:border-slate-850 flex items-center justify-between text-xs text-slate-655 dark:text-slate-400">
+                            <span>Questions:</span>
+                            <span className="font-bold text-slate-800 dark:text-white">
+                              {event.questions.length} {event.questions.length === 1 ? 'Question' : 'Questions'}
+                            </span>
+                          </div>
                         </div>
                         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
                           <button
@@ -765,7 +677,7 @@ export const StudentDashboard = () => {
                       className="w-full bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden print:border-none print:shadow-none"
                     >
                       {/* Top strip border styling */}
-                      <div className="h-2 bg-indigo-650" />
+                      <div className="h-2 bg-indigo-600" />
 
                       <div className="p-6 sm:p-8 space-y-6">
                         {/* Header / Receipt details */}

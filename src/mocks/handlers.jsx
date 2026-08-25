@@ -311,7 +311,8 @@ export const handlers = [
       data: {
         ...receipt,
         candidateName: cand ? cand.name : 'Unknown Candidate',
-        categoryName: cat ? cat.name : 'Unknown Category'
+        categoryName: cat ? cat.name : 'Unknown Category',
+        parentId: cat ? cat.parentId : null
       }
     });
   }),
@@ -652,9 +653,151 @@ export const handlers = [
     // Sort newest votes first
     votesList.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    return HttpResponse.json({
+      return HttpResponse.json({
       success: true,
       data: votesList
+    });
+  }),
+
+  // POST create category
+  http.post('/api/categories', async ({ request }) => {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
+        { status: 400 }
+      );
+    }
+
+    const { name, description, status, parentId, electionId } = body;
+    if (!name) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Category name is required.' } },
+        { status: 400 }
+      );
+    }
+
+    let prefix = 'ev-cat-';
+    if (electionId === 'election-1') {
+      prefix = parentId ? 'club-pos-' : 'club-cat-';
+    } else {
+      prefix = parentId ? 'ev-q-' : 'ev-cat-';
+    }
+
+    const timestamp = Date.now();
+    const newCategory = {
+      id: `${prefix}${timestamp}`,
+      name: name.trim(),
+      description: description || '',
+      status: status || 'ACTIVE',
+      parentId: parentId || null,
+      electionId: electionId || 'election-event'
+    };
+
+    categories.push(newCategory);
+
+    // If creating a club parent card (no parentId and electionId === 'election-1')
+    // auto-create the three default positions: President, Vice President, Treasurer
+    if (electionId === 'election-1' && !parentId) {
+      const defaultPositions = [
+        { id: `club-pos-${timestamp}-pres`, name: 'President', parentId: newCategory.id, electionId: 'election-1' },
+        { id: `club-pos-${timestamp}-vp`, name: 'Vice President', parentId: newCategory.id, electionId: 'election-1' },
+        { id: `club-pos-${timestamp}-tr`, name: 'Treasurer', parentId: newCategory.id, electionId: 'election-1' }
+      ];
+      defaultPositions.forEach(pos => categories.push(pos));
+    }
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('voting_categories', JSON.stringify(categories));
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: newCategory
+    });
+  }),
+
+  // PUT update category
+  http.put('/api/categories/:id', async ({ params, request }) => {
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Invalid JSON request body.' } },
+        { status: 400 }
+      );
+    }
+
+    const idx = categories.findIndex(c => c.id === params.id);
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Category not found.' } },
+        { status: 404 }
+      );
+    }
+
+    categories[idx] = {
+      ...categories[idx],
+      ...body,
+      id: params.id // lock ID
+    };
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('voting_categories', JSON.stringify(categories));
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: categories[idx]
+    });
+  }),
+
+  // DELETE category
+  http.delete('/api/categories/:id', ({ params }) => {
+    const idx = categories.findIndex(c => c.id === params.id);
+    if (idx === -1) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'NOT_FOUND', message: 'Category not found.' } },
+        { status: 404 }
+      );
+    }
+
+    const deleted = categories[idx];
+    categories.splice(idx, 1);
+    
+    // Also delete any child questions/positions if this was a club/event category
+    if (deleted.id.startsWith('ev-cat-') || deleted.id.startsWith('club-cat-')) {
+      const childQuestions = categories.filter(c => c.parentId === deleted.id);
+      childQuestions.forEach(q => {
+        const qIdx = categories.findIndex(c => c.id === q.id);
+        if (qIdx !== -1) categories.splice(qIdx, 1);
+        // Also delete options/candidates under those child categories
+        const opts = candidates.filter(cand => cand.categoryId === q.id);
+        opts.forEach(opt => {
+          const optIdx = candidates.findIndex(cand => cand.id === opt.id);
+          if (optIdx !== -1) candidates.splice(optIdx, 1);
+        });
+      });
+    } else if (deleted.id.startsWith('ev-q-') || deleted.id.startsWith('club-pos-')) {
+      // If this was a question/position, delete its options
+      const opts = candidates.filter(cand => cand.categoryId === deleted.id);
+      opts.forEach(opt => {
+        const optIdx = candidates.findIndex(cand => cand.id === opt.id);
+        if (optIdx !== -1) candidates.splice(optIdx, 1);
+      });
+    }
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('voting_categories', JSON.stringify(categories));
+      window.localStorage.setItem('voting_candidates', JSON.stringify(candidates));
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: deleted
     });
   }),
 

@@ -88,7 +88,7 @@ export const CandidateForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 text-sm text-slate-800 dark:text-slate-205">
+    <form onSubmit={handleSubmit} className="space-y-4 text-sm text-slate-800 dark:text-slate-200">
       {/* Category selector */}
       <div className="flex flex-col gap-1">
         <label htmlFor="form-category" className="text-xs font-bold uppercase tracking-wider text-slate-400">

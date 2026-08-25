@@ -53,7 +53,7 @@ export const VoteReceipt = () => {
         </p>
         <button
           onClick={() => navigate('/student/dashboard')}
-          className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-750 text-white rounded-lg text-sm font-semibold transition-colors"
+          className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-750 rounded-xl shadow-sm hover:shadow active:scale-[0.98] transition-all duration-200 outline-none"
         >
           Back to Dashboard
         </button>
@@ -118,7 +118,7 @@ export const VoteReceipt = () => {
           className="w-full bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 rounded-3xl shadow-xl overflow-hidden print:border-none print:shadow-none"
         >
           {/* Top dotted border styling */}
-          <div className="h-2 bg-indigo-650" />
+          <div className="h-2 bg-indigo-600" />
 
           <div className="p-6 sm:p-8 space-y-6">
             {/* Header / Receipt details */}
@@ -163,7 +163,7 @@ export const VoteReceipt = () => {
                 <span className="text-slate-450 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
                   Category
                 </span>
-                <span className="font-bold text-slate-800 dark:text-slate-205">
+                <span className="font-bold text-slate-700 dark:text-slate-300">
                   {receipt.categoryName}
                 </span>
               </div>
@@ -210,7 +210,12 @@ export const VoteReceipt = () => {
         <div className="flex items-center gap-3 w-full print:hidden">
           <button
             onClick={() => {
-              const clubId = receipt?.categoryId?.startsWith('cult-cat-') ? 'cultural' : 'coding';
+              let clubId = 'coding';
+              if (receipt?.parentId) {
+                clubId = receipt.parentId;
+              } else if (receipt?.categoryId?.startsWith('cult-cat-')) {
+                clubId = 'cultural';
+              }
               navigate('/student/dashboard', { state: { selectedClubId: clubId } });
             }}
             className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl text-sm font-semibold shadow-lg shadow-indigo-900/25 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none text-center"

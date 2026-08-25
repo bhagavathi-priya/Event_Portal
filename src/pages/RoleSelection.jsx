@@ -73,7 +73,7 @@ export const RoleSelection = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-bold text-slate-100 group-hover:text-indigo-600 transition-colors">Student Voter</h2>
+              <h2 className="text-lg font-bold text-slate-100 group-hover:text-blue-600 transition-colors">Student Voter</h2>
               <p className="text-xs text-slate-400 mt-1 mb-4">
                 Browse categories, candidate manifestos, and cast your secure ballot.
               </p>
@@ -110,7 +110,7 @@ export const RoleSelection = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h2 className="text-lg font-bold text-slate-100 group-hover:text-indigo-600 transition-colors">Election Manager</h2>
+              <h2 className="text-lg font-bold text-slate-100 group-hover:text-blue-600 transition-colors">Election Manager</h2>
               <p className="text-xs text-slate-400 mt-1 mb-6">
                 Open/close voting, manage candidates and track tally progress.
               </p>
