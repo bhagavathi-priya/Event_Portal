@@ -13,6 +13,7 @@ import StudentDashboard from '../pages/student/StudentDashboard';
 import CandidateDiscovery from '../pages/student/CandidateDiscovery';
 import CandidateDetail from '../pages/student/CandidateDetail';
 import VoteReceipt from '../pages/student/VoteReceipt';
+import StudentLogin from '../pages/student/StudentLogin';
 
 // Manager Pages
 import ManagerLayout from '../layouts/ManagerLayout';
@@ -29,6 +30,7 @@ export const AppRoutes = () => {
       <Route path="/role-selection" element={<RoleSelection />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/manager/login" element={<ManagerLogin />} />
+      <Route path="/student/login" element={<StudentLogin />} />
 
       {/* Student Protected Routes */}
       <Route

@@ -68,7 +68,7 @@ export const handlers = [
       );
     }
 
-    const { studentId } = body;
+    const { studentId, dob } = body;
     if (!studentId || !studentId.trim()) {
       return HttpResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Student ID is required.' } },
@@ -76,16 +76,79 @@ export const handlers = [
       );
     }
 
-    const cleanId = studentId.trim();
-    const isValid = validStudents.includes(cleanId);
+    if (!dob || !dob.trim()) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'VALIDATION_ERROR', message: 'Date of Birth (DOB) is required.' } },
+        { status: 400 }
+      );
+    }
 
-    if (!isValid) {
+    const cleanId = studentId.trim();
+    const cleanDob = dob.trim();
+
+    // Look up matching student in validStudents (dynamically load from local storage to handle manual changes)
+    let freshValidStudents = [...validStudents];
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem('voting_valid_students');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            freshValidStudents = parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching dynamic validStudents:', e);
+      }
+    }
+
+    const foundStudent = freshValidStudents.find(s => {
+      if (s && typeof s === 'object') {
+        return (s.studentId === cleanId || s.id === cleanId);
+      }
+      return s === cleanId;
+    });
+
+    if (!foundStudent) {
       return HttpResponse.json(
         { 
           success: false, 
           error: { 
             code: 'UNAUTHORIZED', 
             message: 'Invalid Student ID. Only registered students (23CS001 to 23CS050) are authorized to vote.' 
+          } 
+        },
+        { status: 401 }
+      );
+    }
+
+    // Determine stored DOB from mock database
+    let storedDob = null;
+    if (foundStudent && typeof foundStudent === 'object') {
+      storedDob = foundStudent.dob || foundStudent.dateOfBirth || null;
+    }
+
+    // Fallback: Check secondary mapping in case it's stored separately in localStorage
+    if (!storedDob && typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const rawDobs = window.localStorage.getItem('voting_student_dobs');
+        if (rawDobs) {
+          const parsed = JSON.parse(rawDobs);
+          storedDob = parsed[cleanId] || null;
+        }
+      } catch (e) {
+        console.error('Error reading secondary voting_student_dobs:', e);
+      }
+    }
+
+    // Check if the entered DOB matches the stored DOB
+    if (!storedDob || cleanDob !== storedDob) {
+      return HttpResponse.json(
+        { 
+          success: false, 
+          error: { 
+            code: 'UNAUTHORIZED', 
+            message: 'Authentication failed: Incorrect Date of Birth.' 
           } 
         },
         { status: 401 }

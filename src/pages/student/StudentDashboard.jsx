@@ -204,6 +204,93 @@ export const StudentDashboard = () => {
 
   const studentEventVote = eventVotes.find(ev => ev.studentId === studentId && ev.eventId === selectedEventId);
 
+  const handleEventDownload = () => {
+    if (!studentEventVote) return;
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Official Ballot Receipt - ${studentEventVote.id}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;850;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #ffffff;
+      color: #0f172a;
+    }
+  </style>
+</head>
+<body class="flex justify-center items-start min-h-screen py-10 px-6 bg-white">
+  <div class="w-full max-w-2xl bg-white">
+    <!-- Header Section -->
+    <div class="pb-6 border-b border-slate-200">
+      <span class="text-xs font-bold text-slate-500 uppercase tracking-widest block mb-1">Campus Ledger System</span>
+      <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">Official Ballot Receipt</h1>
+    </div>
+
+    <!-- Content Table -->
+    <div class="py-8 space-y-6">
+      <p class="text-sm text-slate-500 leading-relaxed">
+        This document serves as the official transaction confirmation for your ballot. It has been securely logged on the campus election node.
+      </p>
+
+      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50/50">
+        <table class="w-full text-sm text-left border-collapse">
+          <tbody>
+            <tr class="border-b border-slate-200">
+              <td class="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-[11px] w-1/3 bg-slate-100/50">Receipt ID</td>
+              <td class="px-6 py-4 font-mono font-bold text-slate-800 break-all select-all">${studentEventVote.id}</td>
+            </tr>
+            <tr class="border-b border-slate-200">
+              <td class="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-[11px] bg-slate-100/50">Voter ID</td>
+              <td class="px-6 py-4 font-mono font-bold text-slate-800">${studentEventVote.studentId}</td>
+            </tr>
+            <tr class="border-b border-slate-200">
+              <td class="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-[11px] bg-slate-100/50">Election Category</td>
+              <td class="px-6 py-4 font-bold text-slate-800">${studentEventVote.eventName}</td>
+            </tr>
+            <tr class="border-b border-slate-200">
+              <td class="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-[11px] bg-slate-100/50">Date Issued</td>
+              <td class="px-6 py-4 font-semibold text-slate-800">${formatDate(studentEventVote.issuedAt)}</td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 font-semibold text-slate-500 uppercase tracking-wider text-[11px] bg-slate-100/50">Time Logged</td>
+              <td class="px-6 py-4 font-semibold text-slate-800">${formatTime(studentEventVote.issuedAt)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ballot-receipt-${studentEventVote.id}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <PageTransition>
       <div className="space-y-8">
@@ -774,13 +861,13 @@ export const StudentDashboard = () => {
                       </button>
                       
                       <button
-                        onClick={() => window.print()}
+                        onClick={handleEventDownload}
                         className="py-2.5 px-4 bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-750 dark:text-slate-300 text-slate-700 border border-slate-250 dark:border-slate-700 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Print
+                        Download
                       </button>
                     </div>
 

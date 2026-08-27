@@ -46,6 +46,23 @@ export let receipts = loadFromStorage('voting_receipts', []);
 export let managers = loadFromStorage('voting_managers', [...initialManagers]);
 export let validStudents = loadFromStorage('voting_valid_students', [...initialValidStudents]);
 
+// DOB cleanup: Convert voting_valid_students back to raw student ID strings to clear all predefined DOBs from localStorage
+if (isBrowser) {
+  try {
+    const stored = window.localStorage.getItem('voting_valid_students');
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+        const cleaned = parsed.map(item => item && typeof item === 'object' ? (item.studentId || item.id) : item).filter(Boolean);
+        window.localStorage.setItem('voting_valid_students', JSON.stringify(cleaned));
+        validStudents = cleaned;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to clear predefined DOBs from localStorage:', e);
+  }
+}
+
 // Migration: Clean up any default event and club categories/candidates from local storage
 if (isBrowser) {
   const defaultEventIds = [
