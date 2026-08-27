@@ -14,7 +14,7 @@ The portal supports two authenticated roles with credentials validated against t
     *   Review ballot before submission and receive a signed cryptographic receipt.
     *   **Student ID range restriction**: Logins are restricted to registered student IDs in the range **`23CS001` to `23CS050`**. IDs outside this range are rejected with a warning.
     *   **Secret Ballot Receipts**: Receipts display the voter ID, category (fully visible with high-contrast `dark:text-slate-300` styling), date (e.g. `25 August 2026`), and time (e.g. `10:45:32 AM`), but explicitly hide the candidate selected to protect secret-ballot voting privacy.
-    *   **Receipt Dashboard & Print Actions**: Receipts (for both Clubs and Events) feature standardized **Dashboard** and **Print** buttons. Clicking the Dashboard button seamlessly routes the student back to the Student Dashboard (restoring their selected club tab).
+    *   **Receipt Dashboard & Download Actions**: Receipts (for both Clubs and Events) feature standardized **Dashboard** and **Download** buttons. Clicking the Dashboard button seamlessly routes the student back to the Student Dashboard. Clicking the **Download** button exports a clean, borderless, single-page white sheet PDF-style document featuring only the verified vote confirmation details and proper tabular formatting.
     *   Cannot add/edit candidates, toggle election windows, or view live tally charts.
 *   **Election Manager**:
     *   Requires logging in at `/manager/login` with credentials:
@@ -22,9 +22,9 @@ The portal supports two authenticated roles with credentials validated against t
         *   **Password**: `admin123`
     *   **Split Workspace Dashboards**: Separate **Club Management Portal** and **Event Management Portal** views with independent election status tracking (OPEN / CLOSED) and decoupled real-time live tally metrics.
     *   Perform full CRUD operations on candidates and options (Add, Edit, Delete).
-    *   **Gender-Based Profile Photos**: Candidates can be registered as Male or Female. The mock backend automatically assigns a random photo from the corresponding gender folder. The frontend includes a smart `onError` handler that falls back to high-quality portraits/emojis if the local files are missing on disk.
-    *   **Placeholder Auto-Swapping**: Editing a candidate's gender dynamically clears and swaps their placeholder image path to match the updated gender.
+    *   **Candidate Profile Photos & Image Priority**: Managers can enter a custom image URL when adding or editing candidates, which takes highest priority. If left empty, the mock backend automatically assigns a default gender-based profile photo. Editing a candidate's gender or clearing their image field automatically triggers the auto-reassignment of gender-specific placeholders.
     *   **Proportional Live Tally Progress Bars**: Every candidate/option displays their own progress bar filled according to their exact vote percentage, styled in standard Tailwind colors (`bg-indigo-600` and `bg-amber-500` for leaders) for full light and dark mode compatibility.
+    *   **High-Contrast Form Dropdowns**: Creation modals use explicit Tailwind background and text colors on select inputs and child `<option>` tags, preventing white-on-white text rendering issues for options (such as Active/Inactive states) in dark mode.
     *   **Event Category Question Indicators**: Displays an uppercase label for the question category on the left, and a dedicated, rounded accent badge on the right displaying the total count (`X Questions`) in clear, readable text.
     *   Cannot cast votes or access student ballot actions.
 

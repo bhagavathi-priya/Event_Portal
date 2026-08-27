@@ -608,10 +608,10 @@ export const CandidateManagement = ({ module = 'club' }) => {
                 <select
                   value={categoryStatus}
                   onChange={(e) => setCategoryStatus(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-750 bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
-                  <option value="ACTIVE">ACTIVE (Visible to Students)</option>
-                  <option value="INACTIVE">INACTIVE (Hidden from Students)</option>
+                  <option value="ACTIVE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">ACTIVE (Visible to Students)</option>
+                  <option value="INACTIVE" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">INACTIVE (Hidden from Students)</option>
                 </select>
               </div>
 

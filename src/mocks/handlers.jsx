@@ -390,8 +390,11 @@ export const handlers = [
 
     const cleanGender = (gender || 'male').toLowerCase() === 'female' ? 'female' : 'male';
     const randomIndex = Math.floor(Math.random() * 50) + 1;
-    // Assign local image path based on gender
-    const finalImageUrl = imageUrl?.trim() || `/images/candidates/${cleanGender}/${randomIndex}.jpg`;
+    
+    // Assign custom image URL if provided; otherwise, auto-assign based on gender
+    const finalImageUrl = (imageUrl && imageUrl.trim() !== '') 
+      ? imageUrl.trim() 
+      : `/images/candidates/${cleanGender}/${randomIndex}.jpg`;
 
     const newCandidate = addCandidate({
       categoryId,
@@ -430,28 +433,29 @@ export const handlers = [
     const { gender, imageUrl } = body;
     const existingCandidate = candidates.find(c => c.id === params.id);
     const currentImageUrl = (imageUrl !== undefined ? imageUrl : existingCandidate?.imageUrl) || '';
+    const cleanGender = (gender || existingCandidate?.gender || 'male').toLowerCase() === 'female' ? 'female' : 'male';
 
     if (gender) {
-      body.gender = gender.toLowerCase() === 'female' ? 'female' : 'male';
-      
-      const isDefaultMalePhoto = (url) => {
-        return !url || 
-          url.includes('photo-1535713875002-d1d0cf377fde') || 
-          url.includes('/images/candidates/male/');
-      };
-      
-      const isDefaultFemalePhoto = (url) => {
-        return url.includes('/images/candidates/female/');
-      };
+      body.gender = cleanGender;
+    }
 
-      const needsFemalePhoto = body.gender === 'female' && isDefaultMalePhoto(currentImageUrl);
-      const needsMalePhoto = body.gender === 'male' && isDefaultFemalePhoto(currentImageUrl);
+    const isDefaultMalePhoto = (url) => {
+      return !url || 
+        url.includes('photo-1535713875002-d1d0cf377fde') || 
+        url.includes('/images/candidates/male/');
+    };
+    
+    const isDefaultFemalePhoto = (url) => {
+      return url.includes('/images/candidates/female/');
+    };
 
-      // If image is cleared, or if it is a default placeholder that mismatches the new gender, auto-assign
-      if (!currentImageUrl.trim() || needsFemalePhoto || needsMalePhoto) {
-        const randomIndex = Math.floor(Math.random() * 50) + 1;
-        body.imageUrl = `/images/candidates/${body.gender}/${randomIndex}.jpg`;
-      }
+    const needsFemalePhoto = cleanGender === 'female' && isDefaultMalePhoto(currentImageUrl);
+    const needsMalePhoto = cleanGender === 'male' && isDefaultFemalePhoto(currentImageUrl);
+
+    // If image URL is explicitly cleared, is empty, or is a default placeholder that mismatches the gender, auto-assign
+    if (imageUrl === '' || !currentImageUrl.trim() || needsFemalePhoto || needsMalePhoto) {
+      const randomIndex = Math.floor(Math.random() * 50) + 1;
+      body.imageUrl = `/images/candidates/${cleanGender}/${randomIndex}.jpg`;
     }
 
     console.log('PATCH BODY:', body);
