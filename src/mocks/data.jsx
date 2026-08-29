@@ -1,14 +1,5 @@
 // Mock Database State
 const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
-const isLocal = isBrowser && (
-  window.location.hostname === 'localhost' || 
-  window.location.hostname === '127.0.0.1' || 
-  window.location.hostname.startsWith('192.168.') || 
-  window.location.hostname.startsWith('10.') || 
-  window.location.hostname.startsWith('172.') ||
-  window.location.hostname.endsWith('.local')
-);
-const isHosted = isBrowser && !isLocal;
 
 export const initialElection = {
   id: 'election-1',
@@ -16,53 +7,9 @@ export const initialElection = {
   status: 'OPEN', // 'OPEN' or 'CLOSED'
 };
 
-export const initialCategories = isHosted ? [
-  { id: 'cat-1', name: 'Student Body President', electionId: 'election-1' },
-  { id: 'ev-cat-symp', name: 'Symposium Theme', description: 'Vote for your preferred theme for the 2026 Technical Symposium', status: 'ACTIVE', electionId: 'election-event' }
-] : [];
+export const initialCategories = [];
 
-export const initialCandidates = isHosted ? [
-  { 
-    id: 'cand-1', 
-    categoryId: 'cat-1', 
-    name: 'Alex Rivera', 
-    bio: 'Third-year Computer Science major. Passionate about campus technology and coding workshops.', 
-    manifesto: 'Expand campus tech funding and host student-led career fairs!', 
-    gender: 'male', 
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80', 
-    votesCount: 0 
-  },
-  { 
-    id: 'cand-2', 
-    categoryId: 'cat-1', 
-    name: 'Taylor Chen', 
-    bio: 'Third-year Economics major. Focused on green initiatives and reallocating admin budgets.', 
-    manifesto: 'Double the campus recycling bins and install solar panels!', 
-    gender: 'female', 
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80', 
-    votesCount: 0 
-  },
-  { 
-    id: 'cand-symp-1', 
-    categoryId: 'ev-cat-symp', 
-    name: 'Futuristic AI & Robotics', 
-    bio: 'Exploring the boundary of neural networks and autonomous systems.', 
-    manifesto: 'Includes AI panel discussions, robotic wars, and deep learning workshops.', 
-    gender: 'male', 
-    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&h=400&q=80', 
-    votesCount: 0 
-  },
-  { 
-    id: 'cand-symp-2', 
-    categoryId: 'ev-cat-symp', 
-    name: 'Cybersecurity & Quantum Computing', 
-    bio: 'Focus on future security paradigms and encryption technologies.', 
-    manifesto: 'Includes capture-the-flag hackathons, quantum cryptography talks, and malware analysis labs.', 
-    gender: 'female', 
-    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&h=400&q=80', 
-    votesCount: 0 
-  }
-] : [];
+export const initialCandidates = [];
 
 // In-Memory Database instances with localStorage persistence to survive page reloads
 
