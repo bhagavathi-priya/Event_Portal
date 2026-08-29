@@ -13,7 +13,8 @@ import {
   setElectionStatus,
   resetDb,
   managers,
-  validStudents
+  validStudents,
+  studentDobsMap
 } from './data';
 import { ROLES, hasPermission, PERMISSIONS } from '../utils/permissions';
 
@@ -122,27 +123,9 @@ export const handlers = [
       );
     }
 
-    // Determine stored DOB from mock database
-    let storedDob = null;
-    if (foundStudent && typeof foundStudent === 'object') {
-      storedDob = foundStudent.dob || foundStudent.dateOfBirth || null;
-    }
-
-    // Fallback: Check secondary mapping in case it's stored separately in localStorage
-    if (!storedDob && typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const rawDobs = window.localStorage.getItem('voting_student_dobs');
-        if (rawDobs) {
-          const parsed = JSON.parse(rawDobs);
-          storedDob = parsed[cleanId] || null;
-        }
-      } catch (e) {
-        console.error('Error reading secondary voting_student_dobs:', e);
-      }
-    }
-
-    // Check if the entered DOB matches the stored DOB
-    if (!storedDob || cleanDob !== storedDob) {
+    // Check if the entered DOB matches the hardcoded DOB map
+    const correctDob = studentDobsMap[cleanId];
+    if (!correctDob || cleanDob !== correctDob) {
       return HttpResponse.json(
         { 
           success: false, 

@@ -1,4 +1,14 @@
 // Mock Database State
+const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+const isLocal = isBrowser && (
+  window.location.hostname === 'localhost' || 
+  window.location.hostname === '127.0.0.1' || 
+  window.location.hostname.startsWith('192.168.') || 
+  window.location.hostname.startsWith('10.') || 
+  window.location.hostname.startsWith('172.') ||
+  window.location.hostname.endsWith('.local')
+);
+const isHosted = isBrowser && !isLocal;
 
 export const initialElection = {
   id: 'election-1',
@@ -6,12 +16,55 @@ export const initialElection = {
   status: 'OPEN', // 'OPEN' or 'CLOSED'
 };
 
-export const initialCategories = [];
+export const initialCategories = isHosted ? [
+  { id: 'cat-1', name: 'Student Body President', electionId: 'election-1' },
+  { id: 'ev-cat-symp', name: 'Symposium Theme', description: 'Vote for your preferred theme for the 2026 Technical Symposium', status: 'ACTIVE', electionId: 'election-event' }
+] : [];
 
-export const initialCandidates = [];
+export const initialCandidates = isHosted ? [
+  { 
+    id: 'cand-1', 
+    categoryId: 'cat-1', 
+    name: 'Alex Rivera', 
+    bio: 'Third-year Computer Science major. Passionate about campus technology and coding workshops.', 
+    manifesto: 'Expand campus tech funding and host student-led career fairs!', 
+    gender: 'male', 
+    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80', 
+    votesCount: 0 
+  },
+  { 
+    id: 'cand-2', 
+    categoryId: 'cat-1', 
+    name: 'Taylor Chen', 
+    bio: 'Third-year Economics major. Focused on green initiatives and reallocating admin budgets.', 
+    manifesto: 'Double the campus recycling bins and install solar panels!', 
+    gender: 'female', 
+    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400&q=80', 
+    votesCount: 0 
+  },
+  { 
+    id: 'cand-symp-1', 
+    categoryId: 'ev-cat-symp', 
+    name: 'Futuristic AI & Robotics', 
+    bio: 'Exploring the boundary of neural networks and autonomous systems.', 
+    manifesto: 'Includes AI panel discussions, robotic wars, and deep learning workshops.', 
+    gender: 'male', 
+    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=400&h=400&q=80', 
+    votesCount: 0 
+  },
+  { 
+    id: 'cand-symp-2', 
+    categoryId: 'ev-cat-symp', 
+    name: 'Cybersecurity & Quantum Computing', 
+    bio: 'Focus on future security paradigms and encryption technologies.', 
+    manifesto: 'Includes capture-the-flag hackathons, quantum cryptography talks, and malware analysis labs.', 
+    gender: 'female', 
+    imageUrl: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=400&h=400&q=80', 
+    votesCount: 0 
+  }
+] : [];
 
 // In-Memory Database instances with localStorage persistence to survive page reloads
-const isBrowser = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
 
 const loadFromStorage = (key, defaultValue) => {
   if (!isBrowser) return defaultValue;
@@ -98,6 +151,59 @@ if (isBrowser) {
 if (isBrowser && !window.localStorage.getItem('voting_valid_students')) {
   saveToStorage('voting_valid_students', validStudents);
 }
+
+export const studentDobsMap = {
+  "23CS001": "2005-01-01",
+  "23CS002": "2005-01-02",
+  "23CS003": "2005-01-03",
+  "23CS004": "2005-01-04",
+  "23CS005": "2005-01-05",
+  "23CS006": "2005-01-06",
+  "23CS007": "2005-01-07",
+  "23CS008": "2005-01-08",
+  "23CS009": "2005-01-09",
+  "23CS010": "2005-01-10",
+  "23CS011": "2005-01-11",
+  "23CS012": "2005-01-12",
+  "23CS013": "2005-01-13",
+  "23CS014": "2005-01-14",
+  "23CS015": "2005-01-15",
+  "23CS016": "2005-01-16",
+  "23CS017": "2005-01-17",
+  "23CS018": "2005-01-18",
+  "23CS019": "2005-01-19",
+  "23CS020": "2005-01-20",
+  "23CS021": "2005-01-21",
+  "23CS022": "2005-01-22",
+  "23CS023": "2005-01-23",
+  "23CS024": "2005-01-24",
+  "23CS025": "2005-01-25",
+  "23CS026": "2005-01-26",
+  "23CS027": "2005-01-27",
+  "23CS028": "2005-01-28",
+  "23CS029": "2005-02-01",
+  "23CS030": "2005-02-02",
+  "23CS031": "2005-02-03",
+  "23CS032": "2005-02-04",
+  "23CS033": "2005-02-05",
+  "23CS034": "2005-02-06",
+  "23CS035": "2005-02-07",
+  "23CS036": "2005-02-08",
+  "23CS037": "2005-02-09",
+  "23CS038": "2005-02-10",
+  "23CS039": "2005-02-11",
+  "23CS040": "2005-02-12",
+  "23CS041": "2005-02-13",
+  "23CS042": "2005-02-14",
+  "23CS043": "2005-02-15",
+  "23CS044": "2005-02-16",
+  "23CS045": "2005-02-17",
+  "23CS046": "2005-02-18",
+  "23CS047": "2005-02-19",
+  "23CS048": "2005-02-20",
+  "23CS049": "2005-02-21",
+  "23CS050": "2005-02-22"
+};
 
 // Database schema migration: ensure manager has correct email and password
 if (managers.length > 0 && (!managers[0].hasOwnProperty('email') || managers[0].password !== initialManagers[0].password)) {
