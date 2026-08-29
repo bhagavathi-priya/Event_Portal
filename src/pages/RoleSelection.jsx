@@ -1,9 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 export const RoleSelection = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  React.useEffect(() => {
+    logout();
+  }, [logout]);
 
   const handleStudentPortalEnter = () => {
     navigate('/student/login');
