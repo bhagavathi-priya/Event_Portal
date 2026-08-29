@@ -1,5 +1,7 @@
 # College Club & Event Voting Portal
 
+### 🔗 [Live Demo Link](https://event-portal-nine-henna.vercel.app/)
+
 A secure, responsive, and modern web application built using **React.js (Vite)**, **Tailwind CSS**, and **Role-Based Access Control (RBAC)**. The application simulates a realistic frontend-backend boundary using **Axios** and **Mock Service Worker (MSW)** for network interception, alongside **TanStack Query** for server-state caching/revalidation and **Framer Motion** for premium interactive animations.
 
 ---
