@@ -9,6 +9,7 @@ A secure, responsive, and modern web application built using **React.js (Vite)**
 ### 1. Role-Based Access Control (RBAC) & Authentication
 The portal supports two authenticated roles with credentials validated against the `localStorage` mock database:
 *   **Student Voter**:
+    *   **Student ID & DOB Authentication**: Secure login gate validating student IDs and Dates of Birth dynamically against `localStorage` values.
     *   Browse candidate profiles and read campaign manifestos.
     *   Cast exactly one vote per category (e.g. President, Vice President, Treasurer).
     *   Review ballot before submission and receive a signed cryptographic receipt.
