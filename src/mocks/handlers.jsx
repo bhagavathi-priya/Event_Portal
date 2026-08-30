@@ -11,7 +11,6 @@ import {
   updateCandidate, 
   deleteCandidate,
   setElectionStatus,
-  resetDb,
   managers,
   validStudents,
   studentDobsMap
@@ -84,8 +83,20 @@ export const handlers = [
       );
     }
 
-    const cleanId = studentId.trim();
-    const cleanDob = dob.trim();
+    const cleanId = studentId.trim().toUpperCase();
+    let cleanDob = dob.trim();
+    // Normalize DD-MM-YYYY or DD/MM/YYYY to YYYY-MM-DD
+    if (cleanDob.includes('-')) {
+      const parts = cleanDob.split('-');
+      if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+        cleanDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    } else if (cleanDob.includes('/')) {
+      const parts = cleanDob.split('/');
+      if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+        cleanDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
 
     // Look up matching student in validStudents (dynamically load from local storage to handle manual changes)
     let freshValidStudents = [...validStudents];
@@ -108,7 +119,7 @@ export const handlers = [
         return (s.studentId === cleanId || s.id === cleanId);
       }
       return s === cleanId;
-    });
+    }) || validStudents.find(s => s === cleanId);
 
     if (!foundStudent) {
       return HttpResponse.json(
@@ -123,9 +134,26 @@ export const handlers = [
       );
     }
 
-    // Check if the entered DOB matches the hardcoded DOB map
-    const correctDob = studentDobsMap[cleanId];
-    if (!correctDob || cleanDob !== correctDob) {
+    // Exclusively check the hardcoded studentDobsMap from data.jsx (do not check local storage values for DOB)
+    let storedDob = studentDobsMap[cleanId] || null;
+
+    // Normalize stored DOB (hyphens or slashes)
+    if (storedDob) {
+      if (storedDob.includes('-')) {
+        const parts = storedDob.split('-');
+        if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+          storedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      } else if (storedDob.includes('/')) {
+        const parts = storedDob.split('/');
+        if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
+          storedDob = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+    }
+
+    // Check if the entered DOB matches the stored DOB
+    if (!storedDob || cleanDob !== storedDob) {
       return HttpResponse.json(
         { 
           success: false, 
@@ -604,7 +632,36 @@ export const handlers = [
       }
     });
 
-    // If event module, dynamically count votes from localStorage 'voting_event_votes'
+    // Look up freshValidStudents from localStorage to filter out votes from deleted/invalid student IDs
+    let freshValidStudents = [...validStudents];
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const raw = window.localStorage.getItem('voting_valid_students');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            freshValidStudents = parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching dynamic validStudents in tally:', e);
+      }
+    }
+    const freshValidStudentIds = freshValidStudents.map(s => {
+      if (s && typeof s === 'object') {
+        return s.studentId || s.id;
+      }
+      return s;
+    });
+
+    // Filter club votes to only count those from currently valid student IDs and existing candidates
+    const activeCandidateIds = candidates.map(c => c.id);
+    const validVotes = votes.filter(v => 
+      activeCandidateIds.includes(v.candidateId) && 
+      freshValidStudentIds.includes(v.studentId)
+    );
+
+    // If event module, dynamically load and filter event votes
     let storedEventVotes = [];
     if (module === 'event' && typeof window !== 'undefined' && window.localStorage) {
       try {
@@ -617,15 +674,23 @@ export const handlers = [
       }
     }
 
+    // Filter event votes to only count those from currently valid student IDs and active events
+    if (module === 'event') {
+      const activeEventIds = categories.filter(c => c.id.startsWith('ev-cat-')).map(c => c.id);
+      storedEventVotes = storedEventVotes.filter(v => 
+        activeEventIds.includes(v.eventId) && 
+        freshValidStudentIds.includes(v.studentId)
+      );
+    }
+
     // Aggregate tally results
     const categoryTallies = filteredCategories.map(cat => {
       const catCandidates = candidates.filter(c => c.categoryId === cat.id);
       
       const items = catCandidates.map(c => {
-        let votesCount = c.votesCount || 0;
+        let votesCount = 0;
         if (module === 'event') {
           // Count occurrences of this option text in local storage event votes
-          votesCount = 0;
           storedEventVotes.forEach(v => {
             if (v.selections) {
               Object.values(v.selections).forEach(val => {
@@ -635,6 +700,9 @@ export const handlers = [
               });
             }
           });
+        } else {
+          // Count dynamically from valid votes (only counts votes from active students)
+          votesCount = validVotes.filter(v => v.candidateId === c.id).length;
         }
         
         return {
@@ -663,9 +731,9 @@ export const handlers = [
       };
     });
 
-    const totalVotesVolume = module === 'event' 
-      ? storedEventVotes.length 
-      : votes.length;
+    const totalVotesVolume = module === 'event'
+      ? new Set(storedEventVotes.map(v => v.studentId)).size
+      : new Set(validVotes.map(v => v.studentId)).size;
 
     return HttpResponse.json({
       success: true,

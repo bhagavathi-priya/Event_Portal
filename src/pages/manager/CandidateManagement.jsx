@@ -185,7 +185,7 @@ export const CandidateManagement = ({ module = 'club' }) => {
           
           // Options to delete
           const toDelete = originalOpts.filter(
-            orig => !cleanOptions.some(curr => curr.id === orig.id)
+            orig => orig.id && !cleanOptions.some(curr => curr.id === orig.id)
           );
           await Promise.all(toDelete.map(opt => deleteMutation.mutateAsync(opt.id)));
 
@@ -247,13 +247,21 @@ export const CandidateManagement = ({ module = 'club' }) => {
     };
 
     const handleStartEditQuestion = (q, qOptions) => {
+      const mappedOpts = qOptions.map(o => ({ id: o.id, name: o.name }));
       setEditingQuestion({
         id: q.id,
         label: q.name,
-        options: qOptions.map(o => ({ id: o.id, name: o.name }))
+        options: mappedOpts
       });
       setQuestionText(q.name);
-      setOptions(qOptions.map(o => ({ id: o.id, name: o.name })));
+
+      // Ensure at least 2 options are present in the form state when editing
+      const initialOpts = [...mappedOpts];
+      while (initialOpts.length < 2) {
+        initialOpts.push({ id: null, name: '' });
+      }
+
+      setOptions(initialOpts);
       setIsManageQuestionOpen(true);
     };
 
